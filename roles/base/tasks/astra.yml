@@ -1,4 +1,6 @@
 ---
+# Astra Linux requires raw module due to python3-apt incompatbillity
+
 - name: Update apt cache on Astra
   ansible.builtin.raw: apt-get update
   changed_when: false

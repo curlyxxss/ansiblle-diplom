@@ -2,6 +2,8 @@
 #- name: Include common base tasks
 #  ansible.builtin.import_tasks: common.yml
 
+# Route tasks depending on OS
+
 - name: Include Ubuntu-specific base tasks
   ansible.builtin.import_tasks: ubuntu.yml
   when: ansible_facts['distribution'] == "Ubuntu"

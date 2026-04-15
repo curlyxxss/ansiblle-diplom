@@ -1,38 +1,71 @@
-Role Name
-=========
+# Role: base
 
-A brief description of the role goes here.
+## 📌 Описание
 
-Requirements
-------------
+Роль base выполняет базовую настройку операционной системы и является фундаментом для дальнейшей конфигурации рабочей станции.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+---
 
-Role Variables
---------------
+## ⚙️ Функциональность
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+### Ubuntu:
 
-Dependencies
-------------
+* обновление apt cache
+* установка базовых пакетов
+* настройка timezone
+* настройка locale
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+### Astra Linux:
 
-Example Playbook
-----------------
+* обновление пакетов через apt-get
+* установка базовых пакетов через raw
+* настройка timezone
+* генерация locale
+* установка системной locale
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+---
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+## 🧩 Структура
 
-License
--------
+tasks/
+├── main.yml
+├── ubuntu.yml
+└── astra.yml
 
-BSD
+---
 
-Author Information
-------------------
+## ⚠️ Особенности реализации
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Для Astra Linux используется модуль raw, так как стандартный модуль apt требует библиотеку python3-apt, несовместимую с установленным Python 3.9.
+
+---
+
+## 🔧 Переменные
+
+Определяются в defaults/main.yml:
+
+* base_packages — список базовых пакетов
+* base_timezone — часовой пояс
+* base_locale — системная локаль
+
+---
+
+## 🚀 Пример использования
+
+- hosts: workstations
+  become: true
+  roles:
+    - base
+
+---
+
+## 📌 Примечание
+
+Роль не включает:
+
+* пользователей
+* безопасность
+* Docker
+* инструменты разработки
+
+Эти компоненты реализуются отдельными ролями.

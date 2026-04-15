@@ -1,3 +1,4 @@
+# Base system packages for all workstations
 base_packages:
   - curl
   - wget
@@ -6,6 +7,8 @@ base_packages:
   - ca-certificates
   - unzip
 
+# System timezone
 base_timezone: "Europe/Moscow"
 
+# System locale
 base_locale: "en_US.UTF-8"
