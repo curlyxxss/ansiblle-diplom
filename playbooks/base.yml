@@ -1,0 +1,7 @@
+- name: Apply base configuration
+  hosts: workstations
+  become: true
+  gather_facts: true
+
+  roles:
+    - base

@@ -1,0 +1,11 @@
+base_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - ca-certificates
+  - unzip
+
+base_timezone: "Europe/Moscow"
+
+base_locale: "en_US.UTF-8"

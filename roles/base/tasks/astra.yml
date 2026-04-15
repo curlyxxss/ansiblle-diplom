@@ -1,0 +1,36 @@
+---
+- name: Update apt cache on Astra
+  ansible.builtin.raw: apt-get update
+  changed_when: false
+
+- name: Install base packages on Astra
+  ansible.builtin.raw: >
+    DEBIAN_FRONTEND=noninteractive
+    apt-get install -y
+    curl wget git vim ca-certificates unzip locales tzdata
+  register: astra_base_packages_result
+  changed_when: "'0 upgraded, 0 newly installed' not in astra_base_packages_result.stdout"
+
+- name: Set timezone on Astra
+  ansible.builtin.raw: >
+    ln -sf /usr/share/zoneinfo/{{ base_timezone }} /etc/localtime &&
+    echo '{{ base_timezone }}' > /etc/timezone
+  register: astra_timezone_result
+  changed_when: false
+
+- name: Generate locale on Astra
+  ansible.builtin.raw: >
+    grep -q '^{{ base_locale }} UTF-8' /etc/locale.gen ||
+    echo '{{ base_locale }} UTF-8' >> /etc/locale.gen &&
+    locale-gen {{ base_locale }}
+  register: astra_locale_gen_result
+  changed_when: "'generated' in astra_locale_gen_result.stdout.lower() or 'generation complete' in astra_locale_gen_result.stdout.lower()"
+
+- name: Set system locale on Astra
+  ansible.builtin.raw: >
+    printf 'LANG={{ base_locale }}\n' > /etc/default/locale
+  changed_when: false
+
+- name: Show Astra package install result
+  ansible.builtin.debug:
+    var: astra_base_packages_result.stdout_lines
