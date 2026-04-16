@@ -1,4 +1,6 @@
 ---
+# Manage workstation user accounts, SSH access and sudo policy
+
 - name: Ensure managed users are present
   ansible.builtin.user:
     name: "{{ item.name }}"
@@ -61,3 +63,13 @@
   when:
     - users_manage_accounts
     - item.sudo | default(false) == false
+
+- name: Remove users marked as absent
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    state: absent
+    remove: false
+  loop: "{{ users }}"
+  when:
+    - users_manage_accounts
+    - item.state | default('present') == 'absent'

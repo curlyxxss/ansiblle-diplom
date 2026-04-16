@@ -1,10 +1,15 @@
 ---
-# Users managed by the role
+# Enable or disable user account management for this role
 users_manage_accounts: true
 
+# Default shell for managed users
 users_default_shell: /bin/bash
+
+# Default supplementary groups for managed users
 users_default_groups: []
+
+# Reserved for future logic of removing unmanaged users
 users_remove_unmanaged: false
 
-# default empty
+# Real user accounts should be defined in inventory group_vars/host_vars
 users: []

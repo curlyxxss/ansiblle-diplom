@@ -1,38 +1,44 @@
-Role Name
-=========
+# Role: users
 
-A brief description of the role goes here.
+## Назначение
 
-Requirements
-------------
+Роль `users` управляет учетными записями пользователей на рабочих станциях.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Роль предназначена для:
+- создания пользователей;
+- назначения shell;
+- добавления в группы;
+- установки SSH-ключей;
+- управления sudo-доступом через `/etc/sudoers.d`.
 
-Role Variables
---------------
+## Особенности
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+- пользователи описываются через переменные;
+- реальные учетные записи задаются в `group_vars` или `host_vars`;
+- роль не редактирует `/etc/sudoers` напрямую;
+- синтаксис sudoers проверяется через `visudo`;
+- поддерживается состояние `present` и `absent`.
 
-Dependencies
-------------
+## Переменные
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+### defaults
 
-Example Playbook
-----------------
+- `users_manage_accounts` — включает или отключает управление учетными записями;
+- `users_default_shell` — shell по умолчанию;
+- `users_default_groups` — группы по умолчанию;
+- `users_remove_unmanaged` — зарезервировано для будущей логики;
+- `users` — список пользователей (по умолчанию пустой).
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+### пример описания пользователя
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+```yaml
+users:
+  - name: devuser
+    state: present
+    shell: /bin/bash
+    groups:
+      - sudo
+    ssh_keys:
+      - "~/.ssh/diplom.pub"
+    sudo: true
+    sudo_nopasswd: true
