@@ -1,0 +1,10 @@
+---
+# Users managed by the role
+users_manage_accounts: true
+
+users_default_shell: /bin/bash
+users_default_groups: []
+users_remove_unmanaged: false
+
+# default empty
+users: []

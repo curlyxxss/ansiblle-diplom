@@ -1,0 +1,8 @@
+---
+- name: Manage workstation users
+  hosts: workstations
+  become: true
+  gather_facts: true
+
+  roles:
+    - users

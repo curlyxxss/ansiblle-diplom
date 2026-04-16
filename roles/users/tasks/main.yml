@@ -1,0 +1,63 @@
+---
+- name: Ensure managed users are present
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('present') }}"
+    shell: "{{ item.shell | default(users_default_shell) }}"
+    groups: "{{ (item.groups | default(users_default_groups)) | join(',') }}"
+    append: true
+    create_home: true
+  loop: "{{ users }}"
+  when:
+    - users_manage_accounts
+    - item.state | default('present') == 'present'
+
+- name: Ensure .ssh directory exists for managed users
+  ansible.builtin.file:
+    path: "/home/{{ item.0.name }}/.ssh"
+    state: directory
+    owner: "{{ item.0.name }}"
+    group: "{{ item.0.name }}"
+    mode: "0700"
+  loop: "{{ users | subelements('ssh_keys', skip_missing=True) }}"
+  when:
+    - users_manage_accounts
+    - item.0.state | default('present') == 'present'
+
+- name: Install authorized keys for managed users
+  ansible.posix.authorized_key:
+    user: "{{ item.0.name }}"
+    key: "{{ lookup('file', item.1) }}"
+    state: present
+  loop: "{{ users | subelements('ssh_keys', skip_missing=True) }}"
+  when:
+    - users_manage_accounts
+    - item.0.state | default('present') == 'present'
+
+- name: Configure sudoers for users with sudo access
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0440"
+    content: |
+      {% if item.sudo_nopasswd | default(false) %}
+      {{ item.name }} ALL=(ALL) NOPASSWD:ALL
+      {% else %}
+      {{ item.name }} ALL=(ALL) ALL
+      {% endif %}
+    validate: /usr/sbin/visudo -cf %s
+  loop: "{{ users }}"
+  when:
+    - users_manage_accounts
+    - item.state | default('present') == 'present'
+    - item.sudo | default(false)
+
+- name: Remove sudoers file for users without sudo access
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ item.name }}"
+    state: absent
+  loop: "{{ users }}"
+  when:
+    - users_manage_accounts
+    - item.sudo | default(false) == false
