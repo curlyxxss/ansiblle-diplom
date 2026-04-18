@@ -24,3 +24,9 @@ security_ssh_client_alive_count_max: 2
 security_fail2ban_enabled: true
 security_fail2ban_maxretry: 5
 security_fail2ban_bantime: 600
+
+# Firewall 
+
+security_firewall_enabled: true
+security_firewall_allowed_ports:
+  - 22

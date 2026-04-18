@@ -1,0 +1,49 @@
+---
+- name: Install ufw on Ubuntu
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  when: ansible_facts['distribution'] == "Ubuntu"
+
+- name: Install ufw on Astra
+  ansible.builtin.raw: >
+    DEBIAN_FRONTEND=noninteractive apt-get install -y ufw
+  register: astra_ufw_install
+  changed_when: "'0 upgraded, 0 newly installed' not in astra_ufw_install.stdout"
+  when: ansible_facts['distribution_release'] == "orel"
+
+- name: Check if ufw binary exists
+  ansible.builtin.stat:
+    path: /usr/sbin/ufw
+  register: ufw_bin_stat
+
+- name: Fail if ufw is not installed correctly
+  ansible.builtin.fail:
+    msg: "ufw is not installed correctly"
+  when: not ufw_bin_stat.stat.exists
+
+- name: Allow configured firewall ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ security_firewall_allowed_ports }}"
+  when: ufw_bin_stat.stat.exists
+
+- name: Set default incoming policy to deny
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  when: ufw_bin_stat.stat.exists
+
+- name: Set default outgoing policy to allow
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  when: ufw_bin_stat.stat.exists
+
+- name: Enable firewall
+  community.general.ufw:
+    state: enabled
+  when: ufw_bin_stat.stat.exists
