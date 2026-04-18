@@ -79,3 +79,5 @@
 - name: Validate sshd configuration
   ansible.builtin.command: sshd -t
   changed_when: false
+
+- import_tasks: fail2ban.yml

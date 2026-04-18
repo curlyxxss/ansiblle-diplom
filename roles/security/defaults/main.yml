@@ -18,3 +18,9 @@ security_ssh_max_auth_tries: 3
 security_ssh_login_grace_time: 30
 security_ssh_client_alive_interval: 300
 security_ssh_client_alive_count_max: 2
+
+# Fail2ban
+
+security_fail2ban_enabled: true
+security_fail2ban_maxretry: 5
+security_fail2ban_bantime: 600
