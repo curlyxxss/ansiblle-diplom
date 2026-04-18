@@ -1,0 +1,14 @@
+# SSH configuration
+
+security_ssh_port: 22
+
+security_ssh_permit_root_login: "no"
+security_ssh_password_authentication: "no"
+security_ssh_pubkey_authentication: "yes"
+
+# Ограничения пользователей
+security_ssh_allow_users:
+  - devuser
+
+# Restart ssh after config change
+security_ssh_restart: true

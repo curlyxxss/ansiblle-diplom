@@ -1,0 +1,7 @@
+---
+- name: Apply security configuration
+  hosts: workstations
+  become: true
+
+  roles:
+    - security

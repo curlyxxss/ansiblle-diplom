@@ -1,0 +1,50 @@
+---
+# Harden SSH configuration
+
+- name: Ensure sshd_config exists
+  ansible.builtin.stat:
+    path: /etc/ssh/sshd_config
+  register: sshd_config_stat
+
+- name: Fail if sshd_config not found
+  ansible.builtin.fail:
+    msg: "sshd_config not found"
+  when: not sshd_config_stat.stat.exists
+
+- name: Disable root login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: "PermitRootLogin {{ security_ssh_permit_root_login }}"
+    create: yes
+    backup: yes
+  notify: Restart SSH service
+
+- name: Disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: "PasswordAuthentication {{ security_ssh_password_authentication }}"
+    create: yes
+  notify: Restart SSH service
+
+- name: Ensure public key authentication is enabled
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PubkeyAuthentication'
+    line: "PubkeyAuthentication {{ security_ssh_pubkey_authentication }}"
+    create: yes
+  notify: Restart SSH service
+
+- name: Restrict SSH access to allowed users
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?AllowUsers'
+    line: "AllowUsers {{ security_ssh_allow_users | join(' ') }}"
+    create: yes
+  notify: Restart SSH service
+
+- name: Validate sshd configuration
+  ansible.builtin.command: sshd -t
+  changed_when: false
+
