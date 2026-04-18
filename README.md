@@ -166,26 +166,51 @@ ansible-playbook playbooks/security.yml
 ```text id="4m9y7l"
 .
 ├── ansible.cfg
-├── inventories/
-│   ├── inventory.ini
-│   └── group_vars/
-│       └── workstations.yml
-├── playbooks/
-│   ├── base.yml
-│   ├── users.yml
-│   └── security.yml
-├── roles/
-│   ├── base/
-│   ├── users/
-│   └── security/
-│       └── tasks/
-│           ├── main.yml
-│           ├── ssh.yml
-│           ├── fail2ban.yml
-│           └── firewall.yml
-├── scripts/
-│   └── install-python.sh
-└── docs/
+├── docs
+│   └── bootstrap-astra.md
+├── inventories
+│   ├── group_vars
+│   │   └── workstations.yml
+│   └── inventory.ini
+├── playbooks
+│   ├── base.yml
+│   ├── security.yml
+│   └── users.yml
+├── README.md
+├── roles
+│   ├── base
+│   │   ├── defaults
+│   │   │   └── main.yml
+│   │   ├── handlers
+│   │   │   └── main.yml
+│   │   ├── README.md
+│   │   └── tasks
+│   │       ├── astra.yml
+│   │       ├── common.yml
+│   │       ├── main.yml
+│   │       └── ubuntu.yml
+│   ├── security
+│   │   ├── defaults
+│   │   │   └── main.yml
+│   │   ├── handlers
+│   │   │   └── main.yml
+│   │   ├── README.md
+│   │   └── tasks
+│   │       ├── fail2ban.yml
+│   │       ├── firewall.yml
+│   │       ├── main.yml
+│   │       └── ssh.yml
+│   └── users
+│       ├── defaults
+│       │   └── main.yml
+│       ├── handlers
+│       │   └── main.yml
+│       ├── README.md
+│       └── tasks
+│           └── main.yml
+└── scripts
+    └── install-python.sh
+
 ```
 
 ---
