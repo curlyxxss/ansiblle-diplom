@@ -12,3 +12,9 @@ security_ssh_allow_users:
 
 # Restart ssh after config change
 security_ssh_restart: true
+
+#SSH hardening v2
+security_ssh_max_auth_tries: 3
+security_ssh_login_grace_time: 30
+security_ssh_client_alive_interval: 300
+security_ssh_client_alive_count_max: 2
