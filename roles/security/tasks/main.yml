@@ -16,8 +16,8 @@
     path: /etc/ssh/sshd_config
     regexp: '^#?PermitRootLogin'
     line: "PermitRootLogin {{ security_ssh_permit_root_login }}"
-    create: yes
-    backup: yes
+    create: true
+    backup: true
   notify: Restart SSH service
 
 - name: Disable password authentication
@@ -25,7 +25,7 @@
     path: /etc/ssh/sshd_config
     regexp: '^#?PasswordAuthentication'
     line: "PasswordAuthentication {{ security_ssh_password_authentication }}"
-    create: yes
+    create: true
   notify: Restart SSH service
 
 - name: Ensure public key authentication is enabled
@@ -33,7 +33,7 @@
     path: /etc/ssh/sshd_config
     regexp: '^#?PubkeyAuthentication'
     line: "PubkeyAuthentication {{ security_ssh_pubkey_authentication }}"
-    create: yes
+    create: true
   notify: Restart SSH service
 
 - name: Restrict SSH access to allowed users
@@ -41,10 +41,41 @@
     path: /etc/ssh/sshd_config
     regexp: '^#?AllowUsers'
     line: "AllowUsers {{ security_ssh_allow_users | join(' ') }}"
-    create: yes
+    create: true
+  notify: Restart SSH service
+
+- name: Set MaxAuthTries
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?MaxAuthTries'
+    line: "MaxAuthTries {{ security_ssh_max_auth_tries }}"
+    create: true
+  notify: Restart SSH service
+
+- name: Set LoginGraceTime
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?LoginGraceTime'
+    line: "LoginGraceTime {{ security_ssh_login_grace_time }}"
+    create: true
+  notify: Restart SSH service
+
+- name: Set ClientAliveInterval
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ClientAliveInterval'
+    line: "ClientAliveInterval {{ security_ssh_client_alive_interval }}"
+    create: true
+  notify: Restart SSH service
+
+- name: Set ClientAliveCountMax
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ClientAliveCountMax'
+    line: "ClientAliveCountMax {{ security_ssh_client_alive_count_max }}"
+    create: true
   notify: Restart SSH service
 
 - name: Validate sshd configuration
   ansible.builtin.command: sshd -t
   changed_when: false
-
