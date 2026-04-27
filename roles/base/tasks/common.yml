@@ -1,0 +1,27 @@
+---
+- name: Validate base_hostname
+  ansible.builtin.assert:
+    that:
+      - base_hostname is none or (base_hostname | length > 0)
+      - base_hostname is none or (base_hostname | length <= 63)
+      - base_hostname is none or (base_hostname is match('^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$'))
+    fail_msg: "Invalid hostname: {{ base_hostname }}"
+  when: base_hostname is not none
+
+- name: Set system hostname
+  ansible.builtin.hostname:
+    name: "{{ base_hostname }}"
+  when: base_hostname is not none
+  become: true
+
+- name: Manage hostname entry in /etc/hosts
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} ANSIBLE MANAGED HOSTNAME"
+    block: |
+      127.0.1.1 {{ base_hostname }}
+    backup: true
+  when:
+    - base_manage_hosts_file | bool
+    - base_hostname is not none
+  become: true

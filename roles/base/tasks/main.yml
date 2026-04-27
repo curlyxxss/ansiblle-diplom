@@ -1,6 +1,6 @@
 ---
-#- name: Include common base tasks
-#  ansible.builtin.import_tasks: common.yml
+- name: Include common base tasks
+  ansible.builtin.import_tasks: common.yml
 
 # Route tasks depending on OS
 
