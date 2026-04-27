@@ -68,8 +68,8 @@
 * установка базовых пакетов;
 * настройка timezone;
 * настройка locale;
-* отдельная логика для Astra Linux через `raw`.
-
+* отдельная логика для Astra Linux через `raw`;
+* централизированная настройка hostname через host_vars.
 ---
 
 #### Роль `users`
@@ -171,12 +171,16 @@ ansible-playbook playbooks/security.yml
 ├── inventories
 │   ├── group_vars
 │   │   └── workstations.yml
+│   ├── host_vars
+│   │   ├── astra.yml
+│   │   └── ubuntu.yml
 │   └── inventory.ini
 ├── playbooks
 │   ├── base.yml
 │   ├── security.yml
 │   └── users.yml
 ├── README.md
+├── .README.md.swp
 ├── roles
 │   ├── base
 │   │   ├── defaults
