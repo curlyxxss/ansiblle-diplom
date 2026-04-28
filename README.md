@@ -28,10 +28,10 @@
 
 Проект построен на основе ролей Ansible:
 
-* `base` — базовая настройка системы
+* `base` — базовая настройка системы (пакеты, timezone, locale, hostname)
 * `users` — управление учетными записями и доступом
 * `security` — многоуровневая система безопасности
-* `docker` — установка Docker (в разработке)
+* `docker` — установка Docker Engine (полная поддержка Ubuntu, ограниченная поддержка Astra)
 * `dev` — инструменты разработки (в разработке)
 
 ---
@@ -69,7 +69,9 @@
 * настройка timezone;
 * настройка locale;
 * отдельная логика для Astra Linux через `raw`;
-* централизированная настройка hostname через host_vars.
+* централизированная настройка hostname через host_vars;
+* валидация имени хоста;
+* управление записью в /etc/hosts.
 ---
 
 #### Роль `users`
@@ -81,6 +83,26 @@
 * поддержка `state: present` и `state: absent`;
 * конфигурация пользователей вынесена в `group_vars`;
 * обеспечена идемпотентность.
+
+---
+### 🔹 Роль `docker`
+
+Роль выполняет установку и настройку Docker Engine.
+
+#### Ubuntu 24.04
+- установка через официальный Docker repository;
+- установка Docker Engine;
+- установка buildx и compose plugin;
+- запуск и включение сервиса;
+- добавление пользователей в группу docker.
+
+#### Astra Linux Orel
+- выполнена попытка установки через официальный Debian repository;
+- доступная версия Docker Engine — устаревшая (19.x);
+- отсутствуют современные плагины (buildx, compose plugin);
+- Docker считается **ограниченно поддерживаемым** на данной платформе.
+
+Для корпоративного использования Docker рекомендуется использовать Ubuntu.
 
 ---
 
@@ -167,51 +189,61 @@ ansible-playbook playbooks/security.yml
 .
 ├── ansible.cfg
 ├── docs
-│   └── bootstrap-astra.md
+│   └── bootstrap-astra.md
 ├── inventories
-│   ├── group_vars
-│   │   └── workstations.yml
-│   ├── host_vars
-│   │   ├── astra.yml
-│   │   └── ubuntu.yml
-│   └── inventory.ini
+│   ├── group_vars
+│   │   └── workstations.yml
+│   ├── host_vars
+│   │   ├── astra.yml
+│   │   └── ubuntu.yml
+│   └── inventory.ini
 ├── playbooks
-│   ├── base.yml
-│   ├── security.yml
-│   └── users.yml
+│   ├── base.yml
+│   ├── docker.yml
+│   ├── security.yml
+│   └── users.yml
 ├── README.md
-├── .README.md.swp
 ├── roles
-│   ├── base
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── handlers
-│   │   │   └── main.yml
-│   │   ├── README.md
-│   │   └── tasks
-│   │       ├── astra.yml
-│   │       ├── common.yml
-│   │       ├── main.yml
-│   │       └── ubuntu.yml
-│   ├── security
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── handlers
-│   │   │   └── main.yml
-│   │   ├── README.md
-│   │   └── tasks
-│   │       ├── fail2ban.yml
-│   │       ├── firewall.yml
-│   │       ├── main.yml
-│   │       └── ssh.yml
-│   └── users
-│       ├── defaults
-│       │   └── main.yml
-│       ├── handlers
-│       │   └── main.yml
-│       ├── README.md
-│       └── tasks
-│           └── main.yml
+│   ├── base
+│   │   ├── defaults
+│   │   │   └── main.yml
+│   │   ├── handlers
+│   │   │   └── main.yml
+│   │   ├── README.md
+│   │   └── tasks
+│   │       ├── astra.yml
+│   │       ├── common.yml
+│   │       ├── main.yml
+│   │       └── ubuntu.yml
+│   ├── docker
+│   │   ├── defaults
+│   │   │   └── main.yml
+│   │   ├── handlers
+│   │   │   └── main.yml
+│   │   ├── README.md
+│   │   └── tasks
+│   │       ├── astra.yml
+│   │       ├── main.yml
+│   │       └── ubuntu.yml
+│   ├── security
+│   │   ├── defaults
+│   │   │   └── main.yml
+│   │   ├── handlers
+│   │   │   └── main.yml
+│   │   ├── README.md
+│   │   └── tasks
+│   │       ├── fail2ban.yml
+│   │       ├── firewall.yml
+│   │       ├── main.yml
+│   │       └── ssh.yml
+│   └── users
+│       ├── defaults
+│       │   └── main.yml
+│       ├── handlers
+│       │   └── main.yml
+│       ├── README.md
+│       └── tasks
+│           └── main.yml
 └── scripts
     └── install-python.sh
 
@@ -220,8 +252,6 @@ ansible-playbook playbooks/security.yml
 ---
 
 ## 🚧 В разработке
-
-* роль `docker`;
 * настройка среды разработки (Python, pipx);
 * установка инструментов разработчика;
 * расширенная безопасность (security v3);

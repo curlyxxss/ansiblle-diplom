@@ -1,38 +1,165 @@
-Role Name
-=========
+# Role: docker
 
-A brief description of the role goes here.
+## 📌 Назначение
 
-Requirements
-------------
+Роль `docker` выполняет установку и настройку Docker Engine на рабочих станциях.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Роль предназначена для:
 
-Role Variables
---------------
+* подготовки среды контейнеризации;
+* обеспечения возможности запуска контейнеров разработчиками;
+* унификации Docker-окружения.
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+---
 
-Dependencies
-------------
+## 🎯 Что делает роль
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+### Общий функционал
 
-Example Playbook
-----------------
+* удаляет конфликтующие пакеты Docker;
+* устанавливает Docker Engine;
+* запускает и включает сервис;
+* добавляет пользователей в группу `docker`.
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+---
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+## 🐧 Ubuntu 24.04 (полная поддержка)
 
-License
--------
+На Ubuntu используется официальный Docker repository.
 
-BSD
+Роль выполняет:
 
-Author Information
-------------------
+* добавление GPG ключа Docker;
+* добавление apt-репозитория Docker;
+* установку пакетов:
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+  * docker-ce
+  * docker-ce-cli
+  * containerd.io
+  * docker-buildx-plugin
+  * docker-compose-plugin;
+* запуск и включение сервиса;
+* добавление пользователей в группу `docker`.
+
+---
+
+## 🛡 Astra Linux Orel (ограниченная поддержка)
+
+Для Astra Linux была реализована установка через официальный Debian-based подход.
+
+Результат:
+
+* Docker Engine устанавливается;
+* доступная версия — 19.03.x;
+* отсутствуют современные плагины:
+
+  * docker-buildx-plugin
+  * docker-compose-plugin.
+
+---
+
+## ⚠️ Ограничения Astra
+
+* устаревшая версия Docker Engine;
+* отсутствие современных возможностей (Buildx, Compose plugin);
+* потенциальные проблемы с безопасностью и поддержкой;
+* не соответствует baseline корпоративной среды.
+
+---
+
+## 📊 Вывод
+
+* Ubuntu является полностью поддерживаемой платформой для Docker;
+* Astra Linux поддерживается ограниченно;
+* для production-использования Docker рекомендуется использовать Ubuntu.
+
+---
+
+## ⚙️ Основные переменные
+
+Определяются в `defaults/main.yml`.
+
+### Включение роли
+
+```yaml
+docker_enabled: true
+```
+
+---
+
+### Пользователи Docker
+
+```yaml
+docker_users: []
+```
+
+Список пользователей, которые будут добавлены в группу `docker`.
+
+Пример:
+
+```yaml
+docker_users:
+  - devuser
+```
+
+---
+
+### Пакеты (Ubuntu)
+
+```yaml
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+```
+
+---
+
+### Astra настройки
+
+```yaml
+docker_astra_use_official_repo: true
+docker_astra_debian_codename: "stretch"
+```
+
+---
+
+## 🚀 Пример использования
+
+```yaml
+- name: Install Docker
+  hosts: workstations
+  become: true
+
+  roles:
+    - docker
+```
+
+---
+
+## 🔒 Особенности безопасности
+
+* доступ к Docker предоставляется только через группу `docker`;
+* список пользователей задаётся явно;
+* не используется автоматическое добавление всех пользователей;
+* учитывается риск повышения привилегий через Docker.
+
+---
+
+## 🚫 Что не входит в роль
+
+* настройка registry;
+* настройка docker daemon.json;
+* настройка rootless Docker;
+* установка Kubernetes;
+* настройка сетей и volume;
+* установка docker-compose как standalone binary.
+
+---
+
+## 📌 Ограничения текущей версии
+
+* Astra Linux не поддерживает актуальную версию Docker;
+* отсутствует унификация версий между платформами.

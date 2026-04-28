@@ -50,6 +50,31 @@
   changed_when: "'0 upgraded, 0 newly installed' not in astra_docker_install.stdout"
   when: docker_astra_use_official_repo | bool
 
+
+- name: Get Docker version on Astra
+  ansible.builtin.command: docker --version
+  register: astra_docker_version
+  changed_when: false
+  failed_when: false
+
+- name: Warn about unsupported Docker version on Astra
+  ansible.builtin.debug:
+    msg: >
+      Astra Docker version is {{ astra_docker_version.stdout }}.
+      This version is below the project baseline and should not be used
+      as a supported corporate workstation Docker runtime.
+  when: docker_allow_unsupported_astra_version | bool
+
+- name: Fail on unsupported Docker version on Astra
+  ansible.builtin.fail:
+    msg: >
+      Docker version installed on Astra is unsupported for this project:
+      {{ astra_docker_version.stdout }}.
+      Use Ubuntu for Docker-supported workstation profile or provide
+      a newer supported Docker source for Astra.
+  when: not docker_allow_unsupported_astra_version | bool
+
+
 - name: Try to install optional Docker plugin packages on Astra
   ansible.builtin.raw: >
     DEBIAN_FRONTEND=noninteractive
@@ -61,7 +86,7 @@
   when:
     - docker_astra_use_official_repo | bool
     - docker_astra_optional_packages | length > 0
-    
+
 - name: Ensure Docker service is enabled and started on Astra
   ansible.builtin.service:
     name: docker
