@@ -1,0 +1,69 @@
+---
+- name: Remove conflicting Docker packages on Ubuntu
+  ansible.builtin.apt:
+    name: "{{ docker_remove_conflicting_packages }}"
+    state: absent
+    purge: true
+  when: docker_remove_conflicting_packages | length > 0
+
+- name: Ensure Docker repository dependencies are installed on Ubuntu
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: true
+
+- name: Ensure apt keyrings directory exists on Ubuntu
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download Docker GPG key on Ubuntu
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add Docker apt repository on Ubuntu
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: [deb]
+    uris: https://download.docker.com/linux/ubuntu
+    suites: ["{{ ansible_facts['distribution_release'] }}"]
+    components: [stable]
+    architectures:
+      - "{{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else ansible_facts['architecture'] }}"
+    signed_by: /etc/apt/keyrings/docker.asc
+    state: present
+    enabled: true
+  register: docker_repo_result
+
+- name: Update apt cache after adding Docker repository on Ubuntu
+  ansible.builtin.apt:
+    update_cache: true
+  when: docker_repo_result.changed
+
+- name: Install Docker packages on Ubuntu
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+
+- name: Ensure Docker service is enabled and started on Ubuntu
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ensure Docker users are added to docker group on Ubuntu
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+  when: docker_users | length > 0

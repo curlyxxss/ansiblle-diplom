@@ -9,3 +9,6 @@ users:
       - "~/.ssh/diplom.pub"
     sudo: true
     sudo_nopasswd: true
+
+docker_users:
+  - devuser

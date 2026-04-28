@@ -1,0 +1,13 @@
+---
+- name: Include Ubuntu Docker tasks
+  ansible.builtin.import_tasks: ubuntu.yml
+  when:
+    - docker_enabled | bool
+    - ansible_facts['distribution'] == "Ubuntu"
+
+- name: Skip Docker role on unsupported OS
+  ansible.builtin.debug:
+    msg: "Docker role currently supports only Ubuntu. Skipping {{ ansible_facts['distribution'] }}."
+  when:
+    - docker_enabled | bool
+    - ansible_facts['distribution'] != "Ubuntu"
