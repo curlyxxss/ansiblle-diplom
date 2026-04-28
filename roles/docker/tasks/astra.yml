@@ -1,0 +1,77 @@
+---
+- name: Remove conflicting Docker packages on Astra
+  ansible.builtin.raw: >
+    apt-get remove -y
+    {{ docker_remove_conflicting_packages | join(' ') }}
+  register: astra_docker_remove_conflicts
+  changed_when: "'0 upgraded, 0 newly installed, 0 to remove' not in astra_docker_remove_conflicts.stdout"
+  failed_when: false
+
+- name: Install Docker repository dependencies on Astra
+  ansible.builtin.raw: >
+    DEBIAN_FRONTEND=noninteractive
+    apt-get install -y
+    ca-certificates curl gnupg
+  register: astra_docker_repo_deps
+  changed_when: "'0 upgraded, 0 newly installed' not in astra_docker_repo_deps.stdout"
+
+- name: Ensure apt keyrings directory exists on Astra
+  ansible.builtin.raw: install -m 0755 -d /etc/apt/keyrings
+  changed_when: false
+
+- name: Download Docker Debian GPG key on Astra
+  ansible.builtin.raw: >
+    curl -fsSL https://download.docker.com/linux/debian/gpg
+    -o /etc/apt/keyrings/docker.asc
+    && chmod a+r /etc/apt/keyrings/docker.asc
+  changed_when: false
+
+- name: Add Docker Debian repository on Astra
+  ansible.builtin.raw: >
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+    https://download.docker.com/linux/debian
+    {{ docker_astra_debian_codename }} stable"
+    > /etc/apt/sources.list.d/docker.list
+  changed_when: false
+  when: docker_astra_use_official_repo | bool
+
+- name: Update apt cache on Astra after Docker repo
+  ansible.builtin.raw: apt-get update
+  register: astra_docker_apt_update
+  changed_when: false
+  when: docker_astra_use_official_repo | bool
+
+- name: Install Docker Engine packages from official repo on Astra
+  ansible.builtin.raw: >
+    DEBIAN_FRONTEND=noninteractive
+    apt-get install -y
+    {{ docker_astra_packages | join(' ') }}
+  register: astra_docker_install
+  changed_when: "'0 upgraded, 0 newly installed' not in astra_docker_install.stdout"
+  when: docker_astra_use_official_repo | bool
+
+- name: Try to install optional Docker plugin packages on Astra
+  ansible.builtin.raw: >
+    DEBIAN_FRONTEND=noninteractive
+    apt-get install -y
+    {{ docker_astra_optional_packages | join(' ') }}
+  register: astra_docker_optional_install
+  changed_when: "'0 upgraded, 0 newly installed' not in astra_docker_optional_install.stdout"
+  failed_when: false
+  when:
+    - docker_astra_use_official_repo | bool
+    - docker_astra_optional_packages | length > 0
+    
+- name: Ensure Docker service is enabled and started on Astra
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ensure Docker users are added to docker group on Astra
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+  when: docker_users | length > 0

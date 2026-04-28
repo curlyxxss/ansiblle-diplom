@@ -18,3 +18,15 @@ docker_remove_conflicting_packages:
   - podman-docker
   - containerd
   - runc
+
+# Astra Docker repository settings
+docker_astra_use_official_repo: true
+docker_astra_debian_codename: "stretch"
+docker_astra_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+
+docker_astra_optional_packages:
+  - docker-buildx-plugin
+  - docker-compose-plugin
