@@ -1,0 +1,8 @@
+---
+- name: Configure Python developer environment
+  hosts: workstations
+  become: true
+  gather_facts: true
+
+  roles:
+    - dev
