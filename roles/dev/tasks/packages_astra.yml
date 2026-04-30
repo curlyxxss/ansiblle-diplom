@@ -1,0 +1,29 @@
+---
+- name: Check Astra Python bootstrap interpreter
+  ansible.builtin.stat:
+    path: "{{ dev_python_interpreter_astra }}"
+  register: astra_python_stat
+
+- name: Fail if Astra Python bootstrap interpreter is missing
+  ansible.builtin.fail:
+    msg: >
+      Astra Python interpreter {{ dev_python_interpreter_astra }} not found.
+      Run scripts/install-python.sh before applying dev role.
+  when: not astra_python_stat.stat.exists
+
+- name: Install Python build dependencies and extra tools on Astra
+  ansible.builtin.raw: >
+    DEBIAN_FRONTEND=noninteractive
+    apt-get install -y
+    {{ (dev_python_build_dependencies + dev_extra_packages) | join(' ') }}
+  register: astra_dev_packages
+  changed_when: "'0 upgraded, 0 newly installed' not in astra_dev_packages.stdout"
+
+- name: Install optional DB client packages on Astra
+  ansible.builtin.raw: >
+    DEBIAN_FRONTEND=noninteractive
+    apt-get install -y
+    {{ dev_db_client_packages | join(' ') }}
+  register: astra_dev_db_clients
+  changed_when: "'0 upgraded, 0 newly installed' not in astra_dev_db_clients.stdout"
+  when: dev_install_db_clients | bool

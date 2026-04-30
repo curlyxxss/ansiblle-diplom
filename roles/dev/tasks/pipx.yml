@@ -1,0 +1,89 @@
+---
+- name: Set dev Python interpreter for Ubuntu
+  ansible.builtin.set_fact:
+    dev_python_interpreter: "{{ dev_python_interpreter_ubuntu }}"
+  when: ansible_facts['distribution'] == "Ubuntu"
+
+- name: Set dev Python interpreter for Astra
+  ansible.builtin.set_fact:
+    dev_python_interpreter: "{{ dev_python_interpreter_astra }}"
+  when: ansible_facts['distribution_release'] == "orel"
+
+- name: Check selected Python interpreter
+  ansible.builtin.command: "{{ dev_python_interpreter }} --version"
+  register: dev_python_version
+  changed_when: false
+
+- name: Install pipx for dev users on Astra using Python 3.9
+  ansible.builtin.command: "{{ dev_python_interpreter }} -m pip install --user pipx"
+  become: true
+  become_user: "{{ item }}"
+  loop: "{{ dev_users }}"
+  environment:
+    HOME: "/home/{{ item }}"
+  register: astra_pipx_install
+  changed_when: "'Successfully installed' in astra_pipx_install.stdout"
+  when:
+    - ansible_facts['distribution_release'] == "orel"
+    - dev_users | length > 0
+
+- name: Ensure pipx is available for dev users
+  ansible.builtin.command: "{{ dev_python_interpreter }} -m pipx --version"
+  become: true
+  become_user: "{{ item }}"
+  loop: "{{ dev_users }}"
+  environment:
+    HOME: "/home/{{ item }}"
+  changed_when: false
+  when: dev_users | length > 0
+
+- name: Ensure pipx path for dev users
+  ansible.builtin.command: "{{ dev_python_interpreter }} -m pipx ensurepath"
+  become: true
+  become_user: "{{ item }}"
+  loop: "{{ dev_users }}"
+  environment:
+    HOME: "/home/{{ item }}"
+    PIPX_HOME: "/home/{{ item }}/.local/pipx"
+    PIPX_BIN_DIR: "/home/{{ item }}/.local/bin"
+  changed_when: false
+  when: dev_users | length > 0
+
+- name: Install Python CLI tools with pipx for dev users
+  ansible.builtin.command: >
+    {{ dev_python_interpreter }} -m pipx install {{ item.1 | quote }}
+  become: true
+  become_user: "{{ item.0 }}"
+  loop: "{{ dev_users | product(dev_pipx_tools) | list }}"
+  environment:
+    HOME: "/home/{{ item.0 }}"
+    PIPX_HOME: "/home/{{ item.0 }}/.local/pipx"
+    PIPX_BIN_DIR: "/home/{{ item.0 }}/.local/bin"
+  register: pipx_install_result
+  changed_when: "'installed package' in pipx_install_result.stdout"
+  failed_when:
+    - pipx_install_result.rc != 0
+    - "'already seems to be installed' not in pipx_install_result.stderr"
+  when:
+    - dev_users | length > 0
+    - dev_pipx_tools | length > 0
+
+- name: Install Jupyter tools with pipx for dev users
+  ansible.builtin.command: >
+    {{ dev_python_interpreter }} -m pipx install {{ item.1 | quote }}
+  become: true
+  become_user: "{{ item.0 }}"
+  loop: "{{ dev_users | product(dev_jupyter_tools) | list }}"
+  environment:
+    HOME: "/home/{{ item.0 }}"
+    PIPX_HOME: "/home/{{ item.0 }}/.local/pipx"
+    PIPX_BIN_DIR: "/home/{{ item.0 }}/.local/bin"
+  register: pipx_jupyter_result
+  changed_when: "'installed package' in pipx_jupyter_result.stdout"
+  failed_when:
+    - pipx_jupyter_result.rc != 0
+    - "'already seems to be installed' not in pipx_jupyter_result.stderr"
+  when:
+    - dev_install_jupyter | bool
+    - dev_users | length > 0
+    - dev_jupyter_tools | length > 0

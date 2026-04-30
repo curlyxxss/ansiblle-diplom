@@ -1,0 +1,12 @@
+---
+- name: Install Python development packages on Ubuntu
+  ansible.builtin.apt:
+    name: "{{ dev_python_packages_ubuntu + dev_python_build_dependencies + dev_extra_packages }}"
+    state: present
+    update_cache: true
+
+- name: Install optional DB client packages on Ubuntu
+  ansible.builtin.apt:
+    name: "{{ dev_db_client_packages }}"
+    state: present
+  when: dev_install_db_clients | bool

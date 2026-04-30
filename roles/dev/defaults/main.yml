@@ -1,0 +1,74 @@
+---
+dev_enabled: true
+
+# Users that receive developer tooling
+dev_users: []
+
+# Ubuntu Python interpreter
+dev_python_interpreter_ubuntu: python3
+
+# Astra Python interpreter installed during bootstrap
+dev_python_interpreter_astra: /usr/local/bin/python3.9
+
+# Python development packages for Ubuntu
+dev_python_packages_ubuntu:
+  - python3
+  - python3-pip
+  - python3-venv
+  - python3-dev
+  - pipx
+
+# Common build dependencies for Python packages
+dev_python_build_dependencies:
+  - build-essential
+  - gcc
+  - g++
+  - pkg-config
+  - make
+  - tar
+  - libssl-dev
+  - libffi-dev
+  - zlib1g-dev
+  - libbz2-dev
+  - libreadline-dev
+  - libsqlite3-dev
+  - libncursesw5-dev
+  - xz-utils
+  - tk-dev
+  - libxml2-dev
+  - libxmlsec1-dev
+  - liblzma-dev
+
+# Extra CLI tools from OS repositories
+dev_extra_packages:
+  - jq
+  - tree
+  - htop
+  - sqlite3
+
+# Python CLI tools installed with pipx
+dev_pipx_tools:
+  - uv
+  - ruff
+  - black
+  - isort
+  - mypy
+  - pytest
+  - pre-commit
+  - poetry
+  - httpie
+
+# Git configuration
+dev_git_config_enabled: false
+dev_git_user_name: ""
+dev_git_user_email: ""
+
+# Optional profiles
+dev_install_db_clients: false
+dev_db_client_packages:
+  - postgresql-client
+  - redis-tools
+
+dev_install_jupyter: false
+dev_jupyter_tools:
+  - jupyterlab

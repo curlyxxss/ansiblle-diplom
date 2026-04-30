@@ -1,0 +1,22 @@
+---
+- name: Include Ubuntu development packages
+  ansible.builtin.import_tasks: packages_ubuntu.yml
+  when:
+    - dev_enabled | bool
+    - ansible_facts['distribution'] == "Ubuntu"
+
+- name: Include Astra development packages
+  ansible.builtin.import_tasks: packages_astra.yml
+  when:
+    - dev_enabled | bool
+    - ansible_facts['distribution_release'] == "orel"
+
+- name: Include pipx tools tasks
+  ansible.builtin.import_tasks: pipx.yml
+  when: dev_enabled | bool
+
+- name: Include Git configuration tasks
+  ansible.builtin.import_tasks: git.yml
+  when:
+    - dev_enabled | bool
+    - dev_git_config_enabled | bool
