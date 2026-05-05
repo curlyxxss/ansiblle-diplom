@@ -1,6 +1,6 @@
 ---
 users:
-  - name: devuser
+  - name: ansible
     state: present
     shell: /bin/bash
     groups:
@@ -10,6 +10,20 @@ users:
     sudo: true
     sudo_nopasswd: true
 
+  - name: devuser
+    state: present
+    shell: /bin/bash
+    groups: []
+    ssh_keys:
+      - "~/.ssh/diplom.pub"
+    sudo: false
+    sudo_nopasswd: false
+
+
+security_ssh_allow_users:
+  - ansible
+  - devuser
+  
 docker_users:
   - devuser
   

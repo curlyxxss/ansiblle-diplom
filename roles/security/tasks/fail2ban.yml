@@ -4,6 +4,7 @@
     name: fail2ban
     state: present
     update_cache: true
+    lock_timeout: 300
   when:
     - security_fail2ban_enabled
     - ansible_facts['distribution'] == "Ubuntu"

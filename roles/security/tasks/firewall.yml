@@ -4,6 +4,7 @@
     name: ufw
     state: present
     update_cache: true
+    lock_timeout: 300
   when: ansible_facts['distribution'] == "Ubuntu"
 
 - name: Install ufw on Astra
