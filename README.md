@@ -1,235 +1,403 @@
-# Automated Corporate Workstation Setup (Ansible)
+# 🛡️ Automated Secure Developer Workstation Setup
 
 ## 📌 Описание проекта
 
-Проект представляет собой систему автоматизированной настройки корпоративных рабочих станций разработчиков с использованием Ansible.
+Проект представляет собой систему автоматизированной подготовки рабочих станций разработчиков с использованием Ansible.
 
-Цель проекта — создание воспроизводимой, централизованной и безопасной среды разработки, минимизирующей ручную настройку и снижающей риск ошибок и уязвимостей.
+Основная цель проекта — обеспечить воспроизводимую, управляемую и безопасную настройку рабочих машин для разработки. Проект решает задачу централизованной конфигурации Linux-станций, включая базовую настройку ОС, управление пользователями, политики безопасности, Docker и Python-oriented dev-среду.
 
-Поддерживаемые операционные системы:
+Проект ориентирован на сценарий корпоративной разработки, где важно:
 
-* Ubuntu 24.04
-* Astra Linux Orel
-
----
-
-## 🎯 Цели проекта
-
-* автоматизация настройки рабочих станций;
-* унификация окружения разработчиков;
-* централизованное управление доступом;
-* обеспечение базового уровня корпоративной безопасности;
-* снижение ручного администрирования;
-* поддержка мультиплатформенной инфраструктуры.
+- минимизировать ручную настройку;
+- обеспечить единый baseline рабочих станций;
+- разделить административный доступ и пользовательскую работу;
+- повысить безопасность SSH-доступа;
+- подготовить систему к разработке сразу после применения playbook'ов.
 
 ---
 
-## 🏗 Архитектура проекта
+## 🧩 Поддерживаемые платформы
 
-Проект построен на основе ролей Ansible:
+Текущая версия проекта проверялась на:
 
-* `base` — базовая настройка системы (пакеты, timezone, locale, hostname)
-* `users` — управление учетными записями и доступом
-* `security` — многоуровневая система безопасности
-* `docker` — установка Docker Engine (полная поддержка Ubuntu, ограниченная поддержка Astra)
-* `dev` — среда разработки ориентированная на python
+- Ubuntu 24.04
+- Astra Linux Orel
 
----
-
-## ⚙️ Текущий статус проекта
-
-### ✅ Реализовано
-
-#### Инфраструктура
-
-* развернут тестовый стенд:
-
-  * управляющая машина с Ansible;
-  * отдельный хост с виртуальными машинами;
-* настроен доступ по SSH:
-
-  * авторизация по ключам;
-  * конфигурация через `~/.ssh/config`.
+Для Astra Linux реализована отдельная логика, так как система имеет особенности, связанные с Python, пакетным менеджером и доступными версиями программного обеспечения.
 
 ---
 
-#### Совместимость Astra Linux
+## 🏗️ Архитектура проекта
 
-* реализована установка Python 3.9 вручную;
-* настроен `ansible_python_interpreter`;
-* обеспечена работа Ansible на Astra Linux;
-* реализован bootstrap-этап подготовки системы.
+Проект построен на основе Ansible-ролей.
 
----
+| Роль | Назначение |
+|---|---|
+| `base` | Базовая настройка ОС: пакеты, timezone, locale, hostname |
+| `users` | Управление пользователями, SSH-ключами и sudo-доступом |
+| `security` | SSH hardening, fail2ban, firewall |
+| `docker` | Установка Docker Engine и настройка доступа к Docker |
+| `dev` | Python-oriented среда разработки |
 
-#### Роль `base`
-
-* обновление пакетного кэша;
-* установка базовых пакетов;
-* настройка timezone;
-* настройка locale;
-* отдельная логика для Astra Linux через `raw`;
-* централизированная настройка hostname через host_vars;
-* валидация имени хоста;
-* управление записью в /etc/hosts.
----
-
-#### Роль `users`
-
-* создание и управление учетными записями;
-* назначение shell и групп;
-* установка SSH-ключей;
-* управление sudo через `/etc/sudoers.d`;
-* поддержка `state: present` и `state: absent`;
-* конфигурация пользователей вынесена в `group_vars`;
-* обеспечена идемпотентность.
-
----
-#### 🔹 Роль `docker`
-
-Роль выполняет установку и настройку Docker Engine.
-
-#### Ubuntu 24.04
-- установка через официальный Docker repository;
-- установка Docker Engine;
-- установка buildx и compose plugin;
-- запуск и включение сервиса;
-- добавление пользователей в группу docker.
-
-#### Astra Linux Orel
-- выполнена попытка установки через официальный Debian repository;
-- доступная версия Docker Engine — устаревшая (19.x);
-- отсутствуют современные плагины (buildx, compose plugin);
-- Docker считается **ограниченно поддерживаемым** на данной платформе.
-
-Для корпоративного использования Docker рекомендуется использовать Ubuntu.
+Роли разделены по зонам ответственности. Это позволяет развивать проект поэтапно и не смешивать базовую настройку, безопасность, контейнеризацию и пользовательские dev-инструменты.
 
 ---
 
-#### Роль `security` (v2)
+## 👥 Итоговая модель пользователей
 
-Реализована многоуровневая система защиты рабочих станций.
+В проекте используется разделение административного пользователя Ansible и пользователя-разработчика.
 
-**SSH hardening:**
+### 🔧 `ansible`
 
-* отключение входа под пользователем `root`;
-* отключение аутентификации по паролю;
-* использование только SSH-ключей;
-* ограничение списка пользователей (`AllowUsers`);
-* ограничение числа попыток входа (`MaxAuthTries`);
-* ограничение времени на аутентификацию (`LoginGraceTime`);
-* контроль активности соединений (`ClientAliveInterval`, `ClientAliveCountMax`);
-* проверка конфигурации (`sshd -t`);
-* безопасный перезапуск через handlers.
+Служебный пользователь автоматизации.
 
-**Защита от атак:**
+Назначение:
 
-* внедрён `fail2ban`;
-* активирован jail для `sshd`;
-* автоматическая блокировка IP при подозрительной активности.
+- подключение Ansible к целевым машинам;
+- выполнение playbook'ов;
+- использование `become`;
+- административная настройка системы.
 
-**Сетевой уровень:**
+Особенности:
 
-* внедрён firewall (`ufw`);
-* политика: deny all incoming / allow outgoing;
-* разрешён только SSH-доступ;
-* блокировка всех неразрешённых входящих соединений.
+- SSH-доступ по ключу;
+- sudo-доступ;
+- `NOPASSWD`;
+- не используется для ежедневной работы разработчика.
+
+### 👨‍💻 `developer`
+
+Пользователь-разработчик.
+
+Назначение:
+
+- повседневная работа;
+- запуск Docker;
+- использование Python dev-инструментов;
+- Git;
+- разработка.
+
+Особенности:
+
+- SSH-доступ по ключу;
+- без административного sudo-доступа по умолчанию;
+- Docker-доступ выдаётся отдельно через группу `docker`;
+- dev-инструменты устанавливаются в пользовательское окружение.
 
 ---
-#### Роль `dev`
 
-Роль выполняет настройку Python-oriented среды разработки.
+## 🚀 Основной pipeline настройки машины
+
+Инициализация новой машины разделена на два этапа:
+
+1. **Bootstrap provisioning** — первичная подготовка машины и создание пользователя `ansible`.
+2. **Configuration management** — дальнейшая настройка через Ansible-роли.
+
+Общая схема:
+
+```text
+Установка ОС
+    ↓
+Первичный доступ через setup/root/console
+    ↓
+Bootstrap пользователя ansible
+    ↓
+Добавление машины в inventory
+    ↓
+Запуск Ansible playbook'ов
+    ↓
+Готовая рабочая станция разработчика
+```
+
+Подробно процесс описан в документе:
+
+```text
+docs/machine-initialization-pipeline.md
+```
+
+---
+
+## 🔑 Bootstrap пользователя Ansible
+
+Перед полноценным запуском Ansible на чистой машине требуется создать служебного пользователя `ansible`.
+
+Для этого используется скрипт:
+
+```text
+scripts/bootstrap-ansible-user.sh
+```
+
+Скрипт выполняет:
+
+- создание пользователя `ansible`;
+- настройку SSH-ключа;
+- настройку sudo-доступа;
+- создание `/etc/sudoers.d/ansible`;
+- блокировку парольного входа;
+- проверку sudoers-файла через `visudo`.
+
+Пример запуска через файл публичного ключа:
+
+```bash
+sudo PUBLIC_KEY_FILE=/tmp/ansible.pub bash scripts/bootstrap-ansible-user.sh
+```
+
+Пример запуска через переменную:
+
+```bash
+sudo ANSIBLE_PUBLIC_KEY="ssh-ed25519 AAAA... ansible-key" bash scripts/bootstrap-ansible-user.sh
+```
+
+Подробная документация:
+
+```text
+docs/bootstrap-ansible-user.md
+```
+
+---
+
+## 🐍 Особенности Astra Linux
+
+Astra Linux Orel требует отдельного bootstrap-этапа для Python.
+
+Причина: системный Python Astra не подходит для полноценной работы современных Ansible-модулей и dev-инструментов.
+
+Для Astra используется скрипт:
+
+```text
+scripts/install-python.sh
+```
+
+Он устанавливает Python 3.9 в:
+
+```text
+/opt/python/3.9
+```
+
+Для Ansible используется стабильная точка входа:
+
+```text
+/usr/local/bin/python3.9
+```
+
+В inventory для Astra необходимо указать:
+
+```ini
+ansible_python_interpreter=/usr/local/bin/python3.9
+```
+
+Подробная инструкция:
+
+```text
+docs/bootstrap-astra.md
+```
+
+---
+
+## ✅ Что реализовано
+
+### 🔹 Роль `base`
+
+Роль выполняет базовую настройку операционной системы.
 
 Реализовано:
+
+- обновление пакетного кэша;
+- установка базовых пакетов;
+- настройка timezone;
+- настройка locale;
+- настройка hostname;
+- валидация hostname;
+- управление записью в `/etc/hosts`;
+- отдельная логика для Ubuntu и Astra Linux;
+- использование `raw` на Astra там, где стандартные модули Ansible работают ограниченно.
+
+Hostname задаётся через `host_vars`.
+
+Пример:
+
+```yaml
+base_hostname: dev-ubuntu-01
+```
+
+---
+
+### 🔹 Роль `users`
+
+Роль управляет пользователями и доступом.
+
+Реализовано:
+
+- создание пользователей;
+- настройка shell;
+- создание home directory;
+- настройка `.ssh`;
+- установка SSH-ключей;
+- настройка sudo через `/etc/sudoers.d`;
+- удаление sudoers-файла для пользователей без sudo;
+- поддержка пользователей со `state: absent`;
+- разделение служебного пользователя `ansible` и пользователя-разработчика.
+
+---
+
+### 🔹 Роль `security`
+
+Роль реализует базовый security baseline рабочей станции.
+
+#### 🔐 SSH hardening
+
+Реализовано:
+
+- отключение root login;
+- отключение password authentication;
+- включение public key authentication;
+- ограничение входа через `AllowUsers`;
+- настройка `MaxAuthTries`;
+- настройка `LoginGraceTime`;
+- настройка `ClientAliveInterval`;
+- настройка `ClientAliveCountMax`;
+- проверка конфигурации через `sshd -t`;
+- безопасный reload/restart SSH через handlers.
+
+Для playbook'а `security.yml` используется:
+
+```yaml
+force_handlers: true
+```
+
+Это нужно, чтобы SSH handler выполнялся даже при ошибке на другом хосте.
+
+#### 🧱 Fail2ban
+
+Реализовано:
+
+- установка fail2ban;
+- настройка jail для `sshd`;
+- запуск и включение сервиса;
+- защита от brute-force атак.
+
+#### 🔥 Firewall
+
+Реализовано:
+
+- установка `ufw`;
+- политика `deny incoming`;
+- политика `allow outgoing`;
+- разрешение только явно указанных портов;
+- включение firewall.
+
+По умолчанию открыт SSH-порт.
+
+---
+
+### 🔹 Роль `docker`
+
+Роль устанавливает Docker Engine и настраивает доступ к Docker.
+
+#### 🐧 Ubuntu
+
+Для Ubuntu используется официальный Docker repository.
+
+Реализовано:
+
+- удаление конфликтующих Docker-пакетов;
+- добавление GPG-ключа Docker;
+- добавление Docker apt repository;
+- установка Docker Engine;
+- установка Docker CLI;
+- установка containerd;
+- установка Buildx plugin;
+- установка Compose plugin;
+- запуск и включение сервиса Docker;
+- добавление пользователя-разработчика в группу `docker`.
+
+#### 🛡️ Astra Linux
+
+Для Astra Linux была реализована экспериментальная установка через официальный Debian-based Docker repository.
+
+Результат:
+
+- Docker Engine устанавливается;
+- сервис запускается;
+- пользователь может быть добавлен в группу `docker`.
+
+Ограничение:
+
+- доступная версия Docker на Astra Linux Orel устарела;
+- современные Docker plugins могут быть недоступны;
+- Docker на Astra считается ограниченно поддерживаемым.
+
+Для production-like Docker workflow рекомендуется использовать Ubuntu.
+
+---
+
+### 🔹 Роль `dev`
+
+Роль настраивает Python-oriented среду разработки.
+
+Реализовано:
+
 - установка Python dev-пакетов на Ubuntu;
-- использование bootstrap Python 3.9 на Astra Linux;
-- установка build-зависимостей для Python-пакетов;
+- использование bootstrap Python 3.9 на Astra;
+- установка build dependencies;
 - установка дополнительных CLI-инструментов;
 - настройка `pipx`;
 - установка Python CLI-инструментов через `pipx`;
-- установка `uv`;
-- установка инструментов:
-  - `ruff`
-  - `black`
-  - `isort`
-  - `mypy`
-  - `pytest`
-  - `pre-commit`
-  - `poetry`
-  - `httpie`
-- настройка Git для пользователя-разработчика;
-- поддержка опциональных профилей:
-  - Jupyter
-  - DB clients
-- проверена идемпотентность повторным запуском.
----
+- настройка Git для пользователя-разработчика.
 
-## 🔐 Особенности безопасности
+По умолчанию через `pipx` устанавливаются:
 
-- использование SSH-ключей вместо паролей;
-- запрет root-доступа по SSH;
-- ограничение доступа только разрешённым пользователям;
-- защита от brute-force атак через fail2ban;
-- минимизация открытых сетевых портов через ufw;
-- доступ к Docker выдаётся только явно указанным пользователям;
-- системный Python Astra не изменяется;
-- пользовательские Python CLI-инструменты устанавливаются изолированно через pipx.
----
+- `uv`;
+- `ruff`;
+- `black`;
+- `isort`;
+- `mypy`;
+- `pytest`;
+- `pre-commit`;
+- `poetry`;
+- `httpie`.
 
-## ⚠️ Особенности Astra Linux
+Особенность:
 
-Astra Linux Orel имеет ряд платформенных особенностей, которые учитываются в проекте:
+- Ubuntu использует системный Python 3.12;
+- Astra использует Python 3.9 из bootstrap;
+- версии Python CLI-инструментов могут отличаться из-за разных версий Python.
 
-- требуется bootstrap Python 3.9;
-- Python устанавливается в `/opt/python/3.9`;
-- для ролей используется симлинк `/usr/local/bin/python3.9`;
-- часть задач выполняется через `raw`;
-- системный Python Astra не используется как основа dev-среды;
-- Docker на Astra поддерживается ограниченно из-за устаревшей доступной версии;
-- Python dev-инструменты устанавливаются через `pipx` на базе Python 3.9.
+Роль проверена повторным запуском с результатом:
 
----
-
-## 🚀 Запуск
-
-### Базовая настройка системы
-
-```bash id="r1k7q8"
-ansible-playbook playbooks/base.yml
+```text
+changed=0
+failed=0
+unreachable=0
 ```
 
-### Управление пользователями
-
-```bash id="t5n9za"
-ansible-playbook playbooks/users.yml
-```
-
-### Применение политики безопасности
-
-```bash id="8q2mda"
-ansible-playbook playbooks/security.yml
-```
-
-### Настройка Python dev-среды
-```bash
-ansible-playbook playbooks/dev.yml
-```
 ---
 
 ## 📁 Структура проекта
 
-```text id="4m9y7l"
+```text
 .
 ├── ansible.cfg
 ├── docs
-│   └── bootstrap-astra.md
+│   ├── bootstrap-ansible-user.md
+│   ├── bootstrap-astra.md
+│   └── machine-initialization-pipeline.md
+├── files
+│   └── ssh_keys
+│       ├── ansible.pub.example
+│       └── developer.pub.example
+├── .gitignore
 ├── inventories
 │   ├── group_vars
-│   │   └── workstations.yml
+│   │   ├── workstations.yml
+│   │   └── workstations.yml.example
 │   ├── host_vars
 │   │   ├── astra.yml
-│   │   └── ubuntu.yml
-│   └── inventory.ini
+│   │   ├── astra.yml.example
+│   │   ├── ubuntu.yml
+│   │   └── ubuntu.yml.example
+│   ├── inventory.ini
+│   └── inventory.ini.example
 ├── playbooks
 │   ├── base.yml
 │   ├── dev.yml
@@ -239,100 +407,346 @@ ansible-playbook playbooks/dev.yml
 ├── README.md
 ├── roles
 │   ├── base
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── handlers
-│   │   │   └── main.yml
-│   │   ├── README.md
-│   │   └── tasks
-│   │       ├── astra.yml
-│   │       ├── common.yml
-│   │       ├── main.yml
-│   │       └── ubuntu.yml
 │   ├── dev
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── README.md
-│   │   └── tasks
-│   │       ├── git.yml
-│   │       ├── main.yml
-│   │       ├── packages_astra.yml
-│   │       ├── packages_ubuntu.yml
-│   │       └── pipx.yml
 │   ├── docker
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── handlers
-│   │   │   └── main.yml
-│   │   ├── README.md
-│   │   └── tasks
-│   │       ├── astra.yml
-│   │       ├── main.yml
-│   │       └── ubuntu.yml
 │   ├── security
-│   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── handlers
-│   │   │   └── main.yml
-│   │   ├── README.md
-│   │   └── tasks
-│   │       ├── fail2ban.yml
-│   │       ├── firewall.yml
-│   │       ├── main.yml
-│   │       └── ssh.yml
 │   └── users
-│       ├── defaults
-│       │   └── main.yml
-│       ├── handlers
-│       │   └── main.yml
-│       ├── README.md
-│       └── tasks
-│           └── main.yml
 └── scripts
+    ├── bootstrap-ansible-user.sh
     └── install-python.sh
+```
 
+Важно:
+
+- реальные inventory-файлы используются локально;
+- `.example` файлы хранятся в Git;
+- реальные SSH-ключи не должны попадать в репозиторий;
+- реальные `inventories/*.yml` и `inventory.ini` игнорируются через `.gitignore`.
+
+---
+
+## ⚙️ Подготовка локальных файлов из examples
+
+После клонирования репозитория нужно создать локальные конфигурационные файлы из шаблонов.
+
+```bash
+cp inventories/inventory.ini.example inventories/inventory.ini
+cp inventories/group_vars/workstations.yml.example inventories/group_vars/workstations.yml
+cp inventories/host_vars/astra.yml.example inventories/host_vars/astra.yml
+cp inventories/host_vars/ubuntu.yml.example inventories/host_vars/ubuntu.yml
+```
+
+Далее нужно положить реальные публичные ключи:
+
+```bash
+cp ~/.ssh/ansible.pub files/ssh_keys/ansible.pub
+cp ~/.ssh/developer.pub files/ssh_keys/developer.pub
+```
+
+Эти файлы игнорируются Git.
+
+---
+
+## 🧾 Пример inventory
+
+Пример для обычной сети:
+
+```ini
+[astra_hosts]
+astra-01 ansible_host=<astra_ip_or_hostname> ansible_port=22 ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
+
+[ubuntu_hosts]
+ubuntu-01 ansible_host=<ubuntu_ip_or_hostname> ansible_port=22 ansible_user=ansible
+
+[workstations:children]
+astra_hosts
+ubuntu_hosts
+```
+
+Пример для лабораторного стенда с пробросом портов:
+
+```ini
+[astra_hosts]
+astra ansible_host=<lab_host_ip> ansible_port=2222 ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
+
+[ubuntu_hosts]
+ubuntu ansible_host=<lab_host_ip> ansible_port=2223 ansible_user=ansible
+
+[workstations:children]
+astra_hosts
+ubuntu_hosts
 ```
 
 ---
 
-## 🚧 В разработке
-- разделение административного пользователя Ansible и пользователя-разработчика;
-- users v2: расширенная модель управления учетными записями;
-- security v3: аудит, дополнительные SSH-политики, расширенные firewall-правила;
-- улучшение поддержки Docker на Astra Linux при наличии поддерживаемого корпоративного репозитория;
-- опциональная роль для VS Code / GUI-инструментов;
-- закрепление версий Python CLI-инструментов для строгой воспроизводимости.
-* безопасное хранение SSH-ключей.
+## 🧾 Пример group_vars
+
+Пример `inventories/group_vars/workstations.yml`:
+
+```yaml
+---
+users:
+  - name: ansible
+    state: present
+    shell: /bin/bash
+    groups:
+      - sudo
+    ssh_keys:
+      - "files/ssh_keys/ansible.pub"
+    sudo: true
+    sudo_nopasswd: true
+    password_lock: true
+
+  - name: developer
+    state: present
+    shell: /bin/bash
+    groups: []
+    ssh_keys:
+      - "files/ssh_keys/developer.pub"
+    sudo: false
+    sudo_nopasswd: false
+    password_lock: true
+
+security_ssh_allow_users:
+  - ansible
+  - developer
+
+docker_users:
+  - developer
+
+dev_users:
+  - developer
+
+dev_git_config_enabled: true
+dev_git_user_name: "Developer User"
+dev_git_user_email: "developer@example.com"
+```
+
+---
+
+## ▶️ Порядок запуска playbook'ов
+
+Рекомендуемый порядок:
+
+```bash
+ansible-playbook playbooks/base.yml
+ansible-playbook playbooks/users.yml
+ansible-playbook playbooks/security.yml
+ansible-playbook playbooks/docker.yml
+ansible-playbook playbooks/dev.yml
+```
+
+Назначение этапов:
+
+| Playbook | Назначение |
+|---|---|
+| `base.yml` | Базовая настройка ОС |
+| `users.yml` | Пользователи, SSH-ключи, sudo |
+| `security.yml` | SSH hardening, fail2ban, firewall |
+| `docker.yml` | Docker Engine и Docker-доступ |
+| `dev.yml` | Python-oriented dev-среда |
+
+---
+
+## 🧪 Проверка после запуска
+
+### Проверка доступности
+
+```bash
+ansible all -m ping
+```
+
+### Проверка пользователя Ansible
+
+```bash
+ansible all -m command -a "whoami"
+```
+
+Ожидаемый результат:
+
+```text
+ansible
+```
+
+Проверка `become`:
+
+```bash
+ansible all -m command -a "whoami" -b
+```
+
+Ожидаемый результат:
+
+```text
+root
+```
+
+---
+
+### Проверка hostname
+
+```bash
+ansible all -m command -a "hostname"
+```
+
+---
+
+### Проверка security
+
+На целевой машине:
+
+```bash
+sudo sshd -T | grep -i allowusers
+sudo fail2ban-client status
+sudo ufw status verbose
+```
+
+Ожидаемо:
+
+- SSH разрешает только заданных пользователей;
+- fail2ban активен;
+- firewall активен;
+- входящие соединения запрещены по умолчанию;
+- SSH-порт разрешён.
+
+---
+
+### Проверка Docker
+
+```bash
+docker --version
+docker ps
+```
+
+Для Ubuntu также ожидается:
+
+```bash
+docker compose version
+```
+
+---
+
+### Проверка dev-среды
+
+Для Ubuntu:
+
+```bash
+python3 --version
+pipx list
+uv --version
+ruff --version
+pytest --version
+git config --global --list
+```
+
+Для Astra:
+
+```bash
+/usr/local/bin/python3.9 --version
+/usr/local/bin/python3.9 -m pipx list
+~/.local/bin/uv --version
+~/.local/bin/ruff --version
+git config --global --list
+```
+
+---
+
+## 🔐 Безопасность
+
+Проект реализует несколько уровней защиты:
+
+- SSH-доступ только по ключам;
+- отключение password authentication;
+- запрет root login;
+- ограничение SSH-доступа через `AllowUsers`;
+- fail2ban для защиты от brute-force;
+- firewall с политикой `deny incoming`;
+- Docker-доступ только явно указанным пользователям;
+- разделение пользователя Ansible и пользователя-разработчика;
+- пользовательские Python CLI-инструменты устанавливаются через `pipx`, без изменения системного Python;
+- реальные ключи и inventory-файлы не хранятся в Git.
+
+---
+
+## ⚠️ Ограничения текущей версии
+
+На текущем этапе проект не реализует:
+
+- rootless Docker;
+- корпоративный Docker registry;
+- централизованный сбор логов;
+- auditd-политику;
+- SIEM-интеграцию;
+- установку VS Code или других GUI-инструментов;
+- поддержку Red Hat-like систем;
+- полноценную production-поддержку Docker на Astra Linux;
+- строгую фиксацию версий всех Python CLI-инструментов.
 
 ---
 
 ## 📈 Планы развития
 
-* внедрение аудита действий пользователей;
-* централизованный сбор логов;
-* расширенные политики firewall;
-* дополнительный SSH hardening;
-* интеграция с системами мониторинга;
-* подготовка проекта к использованию в корпоративной инфраструктуре.
+Возможные направления развития:
+
+- `users v2`: расширенная модель пользователей;
+- `security v3`: дополнительные SSH-политики, auditd, расширенные firewall-правила;
+- безопасное хранение и ротация ключей;
+- интеграция с Ansible Vault;
+- поддержка Debian и Linux Mint;
+- отдельная роль для VS Code / GUI-инструментов;
+- rootless Docker;
+- version pinning для Python CLI-инструментов;
+- cloud-init/autoinstall для полностью автоматизированного bootstrap.
 
 ---
 
-## ✅ Текущий результат
+## 📚 Документация
 
-На текущем этапе проект реализует полный цикл подготовки рабочей станции разработчика:
+Дополнительные документы:
 
-1. базовая настройка ОС;
-2. управление пользователями;
-3. применение политики безопасности;
-4. установка Docker;
-5. настройка Python-oriented dev-среды.
+```text
+docs/bootstrap-ansible-user.md
+```
 
-Проект проверен на Ubuntu 24.04 и Astra Linux Orel с учетом платформенных различий.
+Описание bootstrap-скрипта для создания служебного пользователя Ansible.
+
+```text
+docs/bootstrap-astra.md
+```
+
+Описание подготовки Astra Linux для работы с Ansible.
+
+```text
+docs/machine-initialization-pipeline.md
+```
+
+Описание полного pipeline инициализации новой машины.
 
 ---
-## 📄 Примечание
 
-Проект разрабатывается в рамках дипломной работы и отражает практическое решение задач автоматизации, стандартизации и обеспечения безопасности рабочих станций разработчиков.
+## 🎯 Текущий результат
 
-Особое внимание уделяется воспроизводимости, масштабируемости и соответствию базовым требованиям корпоративной инфраструктуры.
+Проект реализует полный цикл подготовки рабочей станции разработчика:
 
+1. первичная подготовка машины;
+2. создание служебного пользователя Ansible;
+3. базовая настройка ОС;
+4. управление пользователями;
+5. применение политики безопасности;
+6. установка Docker;
+7. настройка Python-oriented dev-среды.
+
+После применения всех playbook'ов машина становится управляемой, защищённой и готовой к разработке.
+
+---
+
+## 📝 Примечание
+
+Проект разрабатывается как практическая часть дипломной работы и демонстрирует подход к автоматизации настройки защищённых рабочих станций разработчиков.
+
+Основной акцент сделан на:
+
+- воспроизводимости;
+- безопасности;
+- разделении ответственности;
+- поддержке нескольких Linux-дистрибутивов;
+- реалистичном процессе подключения новых машин к управлению.
