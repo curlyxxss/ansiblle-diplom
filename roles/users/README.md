@@ -84,15 +84,24 @@ users_default_groups: []
 Пример:
 
 users:
-  - name: devuser
+  - name: ansible
     state: present
     shell: /bin/bash
     groups:
       - sudo
     ssh_keys:
-      - "~/.ssh/diplom.pub"
+      - "files/ssh_keys/ansible.pub"
     sudo: true
     sudo_nopasswd: true
+
+  - name: developer
+    state: present
+    shell: /bin/bash
+    groups: []
+    ssh_keys:
+      - "files/ssh_keys/developer.pub"
+    sudo: false
+    sudo_nopasswd: false
 
 ---
 

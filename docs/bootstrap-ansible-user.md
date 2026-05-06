@@ -210,17 +210,17 @@ sudo ANSIBLE_PUBLIC_KEY="ssh-ed25519 AAAA... ansible-key" bash bootstrap-ansible
 ## Пример полного запуска
 
 ```bash
-scp ~/.ssh/ansible.pub setup@192.168.1.10:/tmp/ansible.pub
-scp scripts/bootstrap-ansible-user.sh setup@192.168.1.10:/tmp/
+scp ~/.ssh/ansible.pub setup@192.0.2.10:/tmp/ansible.pub
+scp scripts/bootstrap-ansible-user.sh setup@192.0.2.10:/tmp/
 
-ssh setup@192.168.1.10
+ssh setup@192.0.2.10
 sudo PUBLIC_KEY_FILE=/tmp/ansible.pub bash /tmp/bootstrap-ansible-user.sh
 ```
 
 После успешного выполнения скрипта:
 
 ```bash
-ssh ansible@192.168.1.10
+ssh ansible@192.0.2.10
 sudo whoami
 ```
 

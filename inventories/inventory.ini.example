@@ -1,0 +1,9 @@
+[astra_hosts]
+astra-01 ansible_host=<astra_ip_or_hostname> ansible_port=22 ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
+
+[ubuntu_hosts]
+ubuntu-01 ansible_host=<ubuntu_ip_or_hostname> ansible_port=22 ansible_user=ansible
+
+[workstations:children]
+astra_hosts
+ubuntu_hosts

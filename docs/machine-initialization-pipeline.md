@@ -230,10 +230,10 @@ astra-01 ansible_host=<ip_address> ansible_user=ansible ansible_python_interpret
 
 ```ini
 [astra_hosts]
-astra ansible_host=192.168.0.110 ansible_port=2222 ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
+astra ansible_host=<host_ip> ansible_port=2222 ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
 
 [ubuntu_hosts]
-ubuntu ansible_host=192.168.0.110 ansible_port=2223 ansible_user=ansible
+ubuntu ansible_host=<host_ip> ansible_port=2223 ansible_user=ansible
 
 [workstations:children]
 astra_hosts

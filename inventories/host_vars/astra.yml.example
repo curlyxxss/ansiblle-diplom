@@ -1,0 +1,4 @@
+---
+# Hostname follows the naming convention:
+# <purpose>-<os>-<number>
+base_hostname: dev-astra-01

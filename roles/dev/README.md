@@ -219,8 +219,8 @@ dev_git_user_email: ""
 
 ```yaml
 dev_git_config_enabled: true
-dev_git_user_name: "Dev User"
-dev_git_user_email: "devuser@example.com"
+dev_git_user_name: "Developer"
+dev_git_user_email: "developer@example.com"
 ```
 
 ---
@@ -240,8 +240,8 @@ dev_users:
   - devuser
 
 dev_git_config_enabled: true
-dev_git_user_name: "Dev User"
-dev_git_user_email: "devuser@example.com"
+dev_git_user_name: "Developer"
+dev_git_user_email: "developer@example.com"
 ```
 
 ---

@@ -2,6 +2,8 @@
 - name: Apply security configuration
   hosts: workstations
   become: true
+  # Security role modifies SSH configuration.
+  # Handlers must run even if another host fails later in the play.
   gather_facts: true
   force_handlers: true
 
