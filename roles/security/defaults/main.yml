@@ -57,3 +57,10 @@ security_sysctl_settings:
   
 # SSH daemon configuration path
 security_sshd_config_path: /etc/ssh/sshd_config
+
+# SSH drop-in hardening file.
+# Ubuntu may use /etc/ssh/sshd_config.d/50-cloud-init.conf,
+# which can override security-related values from the main config.
+security_sshd_manage_dropin: true
+security_sshd_config_dropin_dir: /etc/ssh/sshd_config.d
+security_sshd_security_dropin_path: /etc/ssh/sshd_config.d/00-ansible-security.conf

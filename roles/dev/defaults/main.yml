@@ -2,7 +2,8 @@
 dev_enabled: true
 
 # Users that receive developer tooling
-dev_users: []
+dev_users: 
+  - developer
 
 # Ubuntu Python interpreter
 dev_python_interpreter_ubuntu: python3

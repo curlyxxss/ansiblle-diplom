@@ -116,6 +116,36 @@
     backup: true
   notify: Restart SSH service
 
+- name: Check if sshd drop-in directory exists
+  ansible.builtin.stat:
+    path: "{{ security_sshd_config_dropin_dir }}"
+  register: security_sshd_dropin_dir_stat
+
+- name: Create SSH hardening drop-in config
+  ansible.builtin.copy:
+    dest: "{{ security_sshd_security_dropin_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      PermitRootLogin {{ security_ssh_permit_root_login }}
+      PasswordAuthentication {{ security_ssh_password_authentication }}
+      PubkeyAuthentication {{ security_ssh_pubkey_authentication }}
+      PermitEmptyPasswords {{ security_ssh_permit_empty_passwords }}
+      X11Forwarding {{ security_ssh_x11_forwarding }}
+      AllowTcpForwarding {{ security_ssh_allow_tcp_forwarding }}
+      MaxAuthTries {{ security_ssh_max_auth_tries }}
+      LoginGraceTime {{ security_ssh_login_grace_time }}
+      ClientAliveInterval {{ security_ssh_client_alive_interval }}
+      ClientAliveCountMax {{ security_ssh_client_alive_count_max }}
+      MaxSessions {{ security_ssh_max_sessions }}
+      MaxStartups {{ security_ssh_max_startups }}
+      AllowUsers {{ security_ssh_allow_users | join(' ') }}
+  when:
+    - security_sshd_manage_dropin | bool
+    - security_sshd_dropin_dir_stat.stat.exists
+  notify: Restart SSH service
+
 - name: Validate sshd configuration
   ansible.builtin.command: sshd -t
   changed_when: false
