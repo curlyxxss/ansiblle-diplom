@@ -24,11 +24,12 @@
   ansible.builtin.raw: "locale -a | grep -Fi '{{ base_locale | replace('UTF-8', 'utf8') }}'"
   register: astra_locale_check
   changed_when: false
+  failed_when: astra_locale_check.rc not in [0, 1]
 
 - name: Generate locale on Astra
   ansible.builtin.raw: >
     grep -q '^{{ base_locale }} UTF-8' /etc/locale.gen ||
-    echo '{{ base_locale }} UTF-8' >> /etc/locale.gen &&
+    echo '{{ base_locale }} UTF-8' >> /etc/locale.gen;
     locale-gen {{ base_locale }}
   when: astra_locale_check.rc != 0
   changed_when: true

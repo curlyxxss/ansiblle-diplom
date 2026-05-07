@@ -32,6 +32,25 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+find_command() {
+  local cmd="$1"
+  local candidate
+
+  if command -v "${cmd}" >/dev/null 2>&1; then
+    command -v "${cmd}"
+    return 0
+  fi
+
+  for candidate in "/usr/sbin/${cmd}" "/sbin/${cmd}" "/usr/bin/${cmd}" "/bin/${cmd}"; do
+    if [[ -x "${candidate}" ]]; then
+      echo "${candidate}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 check_command() {
   local description="$1"
   shift
@@ -155,18 +174,57 @@ check_users() {
 check_ssh_security() {
   log_section "SSH security checks"
 
-  if ! command_exists sshd; then
-    fail "sshd command is not available"
-    return
-  fi
+  local sshd_bin=""
+  local ssh_service=""
+  local sshd_config_file="/etc/ssh/sshd_config"
+  local sshd_config=""
 
-  if ${SUDO} sshd -t >/dev/null 2>&1; then
-    ok "sshd configuration syntax is valid"
+  if sshd_bin="$(find_command sshd 2>/dev/null)"; then
+    if ${SUDO} "${sshd_bin}" -t >/dev/null 2>&1; then
+      ok "SSH server configuration syntax is valid"
+    else
+      fail "SSH server configuration syntax is invalid"
+    fi
+
+    sshd_config="$(${SUDO} "${sshd_bin}" -T 2>/dev/null || true)"
   else
-    fail "sshd configuration syntax is invalid"
-  fi
+    if systemctl list-unit-files ssh.service >/dev/null 2>&1 || systemctl status ssh >/dev/null 2>&1; then
+      ssh_service="ssh"
+      warn "sshd command is not available; checking ssh service and sshd_config file directly"
+    else
+      fail "Neither sshd command nor ssh service is available"
+      return
+    fi
 
-  sshd_config="$(${SUDO} sshd -T 2>/dev/null || true)"
+    if systemctl is-enabled "${ssh_service}" >/dev/null 2>&1; then
+      ok "ssh service is enabled"
+    else
+      warn "ssh service is not enabled"
+    fi
+
+    if systemctl is-active "${ssh_service}" >/dev/null 2>&1; then
+      ok "ssh service is active"
+    else
+      fail "ssh service is not active"
+    fi
+
+    if [[ -f "${sshd_config_file}" ]]; then
+      ok "SSH config file exists: ${sshd_config_file}"
+      sshd_config="$(awk '
+        /^[[:space:]]*#/ { next }
+        /^[[:space:]]*$/ { next }
+        {
+          key=tolower($1)
+          $1=""
+          sub(/^[[:space:]]+/, "")
+          print key " " tolower($0)
+        }
+      ' "${sshd_config_file}")"
+    else
+      fail "SSH config file is missing: ${sshd_config_file}"
+      return
+    fi
+  fi
 
   check_sshd_value() {
     local key="$1"
@@ -215,7 +273,6 @@ check_ssh_security() {
     warn "SSH MaxStartups is not configured"
   fi
 }
-
 check_fail2ban() {
   log_section "Fail2ban checks"
 
@@ -246,12 +303,15 @@ check_fail2ban() {
 check_firewall() {
   log_section "Firewall checks"
 
-  if ! command_exists ufw; then
+  local ufw_bin=""
+
+  if ! ufw_bin="$(find_command ufw 2>/dev/null)"; then
     fail "ufw is not installed"
     return
   fi
 
-  ufw_status="$(${SUDO} ufw status verbose 2>/dev/null || true)"
+  ok "ufw is installed: ${ufw_bin}"
+  ufw_status="$(${SUDO} "${ufw_bin}" status verbose 2>/dev/null || true)"
 
   if echo "${ufw_status}" | grep -qi '^Status: active'; then
     ok "ufw is active"
@@ -275,12 +335,21 @@ check_firewall() {
 check_sysctl() {
   log_section "Sysctl hardening checks"
 
+  local sysctl_bin=""
+
+  if ! sysctl_bin="$(find_command sysctl 2>/dev/null)"; then
+    fail "sysctl command is not available"
+    return
+  fi
+
+  ok "sysctl command is available: ${sysctl_bin}"
+
   check_sysctl_value() {
     local key="$1"
     local expected="$2"
     local actual
 
-    actual="$(sysctl -n "${key}" 2>/dev/null || true)"
+    actual="$(${SUDO} "${sysctl_bin}" -n "${key}" 2>/dev/null || true)"
 
     if [[ "${actual}" == "${expected}" ]]; then
       ok "sysctl ${key} = ${expected}"
@@ -331,7 +400,11 @@ check_docker() {
     if id "${DEV_USER}" 2>/dev/null | grep -q '\bdocker\b'; then
       ok "Developer user '${DEV_USER}' is in docker group"
     else
-      fail "Developer user '${DEV_USER}' is not in docker group"
+      if [[ "${OS_ID}" == "ubuntu" ]]; then
+        fail "Developer user '${DEV_USER}' is not in docker group"
+      else
+        warn "Developer user '${DEV_USER}' is not in docker group; this is expected on Astra"
+      fi
     fi
   fi
 
