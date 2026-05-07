@@ -30,3 +30,30 @@ security_fail2ban_bantime: 600
 security_firewall_enabled: true
 security_firewall_allowed_ports:
   - 22
+
+# Additional SSH hardening
+security_ssh_permit_empty_passwords: "no"
+security_ssh_x11_forwarding: "no"
+
+# SSH TCP forwarding may be required for developers who use tunnels.
+# Default is disabled for a stricter workstation baseline.
+security_ssh_allow_tcp_forwarding: "no"
+
+security_ssh_max_sessions: 2
+security_ssh_max_startups: "10:30:60"
+
+# Basic network sysctl hardening
+security_sysctl_enabled: true
+
+security_sysctl_settings:
+  net.ipv4.conf.all.accept_redirects: "0"
+  net.ipv4.conf.default.accept_redirects: "0"
+  net.ipv4.conf.all.send_redirects: "0"
+  net.ipv4.conf.default.send_redirects: "0"
+  net.ipv4.conf.all.accept_source_route: "0"
+  net.ipv4.conf.default.accept_source_route: "0"
+  net.ipv4.icmp_echo_ignore_broadcasts: "1"
+  net.ipv4.tcp_syncookies: "1"
+  
+# SSH daemon configuration path
+security_sshd_config_path: /etc/ssh/sshd_config

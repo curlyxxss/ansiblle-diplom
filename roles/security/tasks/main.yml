@@ -11,3 +11,7 @@
 - name: Include firewall tasks
   ansible.builtin.import_tasks: firewall.yml
   when: security_firewall_enabled
+
+- name: Include sysctl tasks
+  ansible.builtin.import_tasks: sysctl.yml
+  when: security_sysctl_enabled | bool

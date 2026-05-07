@@ -1,0 +1,10 @@
+---
+- name: Apply basic sysctl hardening settings
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/99-workstation-security.conf
+  loop: "{{ security_sysctl_settings | dict2items }}"
+  when: security_sysctl_enabled | bool
