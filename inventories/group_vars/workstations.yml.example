@@ -1,9 +1,10 @@
 ---
 # Managed users.
-# The "ansible" user is used for automation.
-# The "developer" user is used for daily development work.
+# The "ansible" user is used only for automation.
+# The "developer" user is used for daily work.
 users:
   - name: ansible
+    comment: "Ansible automation user"
     state: present
     shell: /bin/bash
     groups:
@@ -15,6 +16,7 @@ users:
     password_lock: true
 
   - name: developer
+    comment: "Developer workstation user"
     state: present
     shell: /bin/bash
     groups: []
@@ -24,21 +26,22 @@ users:
     sudo_nopasswd: false
     password_lock: true
 
-# SSH access policy.
+# Example of explicit user removal.
+# This is intentionally explicit and disabled by default.
+#  - name: setup
+#    state: absent
+#    remove_home: false
+
 security_ssh_allow_users:
   - ansible
   - developer
 
-# Docker access is granted only to developer users.
 docker_users:
   - developer
 
-# Developer tooling is installed only for developer users.
 dev_users:
   - developer
 
-# Git identity for developer users.
-# Replace with real corporate/user values before running.
 dev_git_config_enabled: true
 dev_git_user_name: "Developer User"
 dev_git_user_email: "developer@example.com"

@@ -1,15 +1,18 @@
 ---
-# Enable or disable user account management for this role
+# Enable or disable user management role
 users_manage_accounts: true
 
-# Default shell for managed users
+# Default values for managed users
 users_default_shell: /bin/bash
-
-# Default supplementary groups for managed users
 users_default_groups: []
 
-# Reserved for future logic of removing unmanaged users
+# Users list is expected to be defined in inventory/group_vars/host_vars
+users: []
+
+# Safety switch.
+# The role does NOT remove unmanaged users automatically.
+# Users are removed only when explicitly configured with state: absent.
 users_remove_unmanaged: false
 
-# Real user accounts should be defined in inventory group_vars/host_vars
-users: []
+# Default behavior for absent users
+users_absent_remove_home: false

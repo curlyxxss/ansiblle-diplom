@@ -1,17 +1,17 @@
 ---
-# Manage workstation user accounts, SSH access and sudo policy
-
 - name: Ensure managed users are present
   ansible.builtin.user:
     name: "{{ item.name }}"
-    state: "{{ item.state | default('present') }}"
+    state: present
     shell: "{{ item.shell | default(users_default_shell) }}"
+    comment: "{{ item.comment | default(omit) }}"
     groups: "{{ (item.groups | default(users_default_groups)) | join(',') }}"
     append: true
     create_home: true
+    password_lock: "{{ item.password_lock | default(omit) }}"
   loop: "{{ users }}"
   when:
-    - users_manage_accounts
+    - users_manage_accounts | bool
     - item.state | default('present') == 'present'
 
 - name: Ensure .ssh directory exists for managed users
@@ -23,7 +23,7 @@
     mode: "0700"
   loop: "{{ users | subelements('ssh_keys', skip_missing=True) }}"
   when:
-    - users_manage_accounts
+    - users_manage_accounts | bool
     - item.0.state | default('present') == 'present'
 
 - name: Install authorized keys for managed users
@@ -33,7 +33,7 @@
     state: present
   loop: "{{ users | subelements('ssh_keys', skip_missing=True) }}"
   when:
-    - users_manage_accounts
+    - users_manage_accounts | bool
     - item.0.state | default('present') == 'present'
 
 - name: Configure sudoers for users with sudo access
@@ -51,7 +51,7 @@
     validate: /usr/sbin/visudo -cf %s
   loop: "{{ users }}"
   when:
-    - users_manage_accounts
+    - users_manage_accounts | bool
     - item.state | default('present') == 'present'
     - item.sudo | default(false)
 
@@ -61,15 +61,25 @@
     state: absent
   loop: "{{ users }}"
   when:
-    - users_manage_accounts
-    - item.sudo | default(false) == false
+    - users_manage_accounts | bool
+    - item.state | default('present') == 'present'
+    - not item.sudo | default(false)
 
 - name: Remove users marked as absent
   ansible.builtin.user:
     name: "{{ item.name }}"
     state: absent
-    remove: false
+    remove: "{{ item.remove_home | default(users_absent_remove_home) }}"
   loop: "{{ users }}"
   when:
-    - users_manage_accounts
+    - users_manage_accounts | bool
+    - item.state | default('present') == 'absent'
+
+- name: Remove sudoers file for absent users
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ item.name }}"
+    state: absent
+  loop: "{{ users }}"
+  when:
+    - users_manage_accounts | bool
     - item.state | default('present') == 'absent'
