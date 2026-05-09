@@ -1,8 +1,13 @@
 ---
 docker_enabled: true
 
+# Users that should be added to the docker group.
+# Define in group_vars/host_vars, for example:
+# docker_users:
+#   - developer
 docker_users: []
 
+# Docker packages installed from the official Docker apt repository.
 docker_packages:
   - docker-ce
   - docker-ce-cli
@@ -10,6 +15,7 @@ docker_packages:
   - docker-buildx-plugin
   - docker-compose-plugin
 
+# Packages that may conflict with official Docker packages.
 docker_remove_conflicting_packages:
   - docker.io
   - docker-compose
@@ -18,6 +24,16 @@ docker_remove_conflicting_packages:
   - podman-docker
   - containerd
   - runc
+
+# Docker apt repository settings for Ubuntu/Debian.
+docker_apt_keyrings_dir: /etc/apt/keyrings
+docker_apt_gpg_key_path: /etc/apt/keyrings/docker.asc
+
+docker_ubuntu_repo_url: https://download.docker.com/linux/ubuntu
+docker_ubuntu_gpg_url: https://download.docker.com/linux/ubuntu/gpg
+
+docker_debian_repo_url: https://download.docker.com/linux/debian
+docker_debian_gpg_url: https://download.docker.com/linux/debian/gpg
 
 # Astra Docker repository settings
 docker_astra_use_official_repo: true

@@ -1,16 +1,19 @@
 ---
+- name: Skip Docker role when disabled
+  ansible.builtin.meta: end_play
+  when: not docker_enabled | bool
+
 - name: Include Ubuntu Docker tasks
   ansible.builtin.import_tasks: ubuntu.yml
-  when:
-    - docker_enabled | bool
-    - ansible_facts['distribution'] == "Ubuntu"
+  when: ansible_facts['distribution'] == "Ubuntu"
+
+- name: Include Debian Docker tasks
+  ansible.builtin.import_tasks: debian.yml
+  when: ansible_facts['distribution'] == "Debian"
 
 - name: Include Astra Docker tasks
   ansible.builtin.import_tasks: astra.yml
-  when:
-    - docker_enabled | bool
-    - ansible_facts['distribution_release'] == "orel"
-
+  when: ansible_facts['distribution_release'] | default('') == "orel"
 
 # - name: Skip Docker role on unsupported OS
 #   ansible.builtin.debug:
