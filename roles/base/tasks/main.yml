@@ -8,6 +8,10 @@
   ansible.builtin.import_tasks: ubuntu.yml
   when: ansible_facts['distribution'] == "Ubuntu"
 
+- name: Include Debian-specific base tasks
+  ansible.builtin.import_tasks: debian.yml
+  when: ansible_facts['distribution'] == "Debian"
+
 - name: Include Astra-specific base tasks
   ansible.builtin.import_tasks: astra.yml
   when: ansible_facts['distribution_release'] == "orel"

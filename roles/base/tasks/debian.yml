@@ -1,0 +1,31 @@
+---
+- name: Update apt cache on Debian
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages on Debian
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Set timezone on Debian
+  community.general.timezone:
+    name: "{{ base_timezone }}"
+
+- name: Ensure locale package is installed on Debian
+  ansible.builtin.apt:
+    name: locales
+    state: present
+
+- name: Generate locale on Debian
+  ansible.builtin.locale_gen:
+    name: "{{ base_locale }}"
+    state: present
+
+- name: Set system locale on Debian
+  ansible.builtin.lineinfile:
+    path: /etc/default/locale
+    regexp: '^LANG='
+    line: 'LANG={{ base_locale }}'
+    create: true

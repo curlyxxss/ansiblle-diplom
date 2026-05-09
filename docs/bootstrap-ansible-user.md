@@ -15,8 +15,8 @@ scripts/bootstrap-ansible-user.sh
 Скрипт используется для подготовки рабочих станций на следующих ОС:
 
 - Ubuntu 24.04;
-- Astra Linux Orel;
-- Debian 12.13.0.
+- Debian 12.13.0;
+- Astra Linux Orel 2.12.
 
 ---
 
