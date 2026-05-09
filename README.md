@@ -179,7 +179,6 @@ scripts/install-python.sh
 │   ├── docker.yml
 │   ├── security.yml
 │   └── users.yml
-├── README_global_updated.md
 ├── README.md
 ├── roles
 │   ├── base
