@@ -1,0 +1,14 @@
+---
+- name: Install Python development packages on Debian
+  ansible.builtin.apt:
+    name: "{{ dev_python_packages_debian + dev_python_build_dependencies + dev_extra_packages }}"
+    state: present
+    update_cache: true
+    lock_timeout: 300
+
+- name: Install optional DB client packages on Debian
+  ansible.builtin.apt:
+    name: "{{ dev_db_client_packages }}"
+    state: present
+    lock_timeout: 300
+  when: dev_install_db_clients | bool

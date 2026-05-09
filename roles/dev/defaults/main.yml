@@ -2,17 +2,29 @@
 dev_enabled: true
 
 # Users that receive developer tooling
-dev_users: 
+dev_users:
   - developer
 
-# Ubuntu Python interpreter
+# Base path for user home directories
+dev_home_base: /home
+
+# Python interpreters by platform
 dev_python_interpreter_ubuntu: python3
+dev_python_interpreter_debian: python3
 
 # Astra Python interpreter installed during bootstrap
 dev_python_interpreter_astra: /usr/local/bin/python3.9
 
 # Python development packages for Ubuntu
 dev_python_packages_ubuntu:
+  - python3
+  - python3-pip
+  - python3-venv
+  - python3-dev
+  - pipx
+
+# Python development packages for Debian
+dev_python_packages_debian:
   - python3
   - python3-pip
   - python3-venv

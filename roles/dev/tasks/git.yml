@@ -8,8 +8,9 @@
   become_user: "{{ item }}"
   loop: "{{ dev_users }}"
   environment:
-    HOME: "/home/{{ item }}"
+    HOME: "{{ dev_home_base }}/{{ item }}"
   when:
+    - dev_git_config_enabled | bool
     - dev_git_user_name | length > 0
     - dev_users | length > 0
 
@@ -22,7 +23,8 @@
   become_user: "{{ item }}"
   loop: "{{ dev_users }}"
   environment:
-    HOME: "/home/{{ item }}"
+    HOME: "{{ dev_home_base }}/{{ item }}"
   when:
+    - dev_git_config_enabled | bool
     - dev_git_user_email | length > 0
     - dev_users | length > 0
