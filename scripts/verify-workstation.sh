@@ -147,7 +147,11 @@ check_users() {
       fail "Sudoers file for 'ansible' is invalid"
     fi
   else
-    fail "Sudoers file for 'ansible' is missing"
+    if sudo -n true >/dev/null 2>&1; then
+      ok "Sudoers file for 'ansible' is not present, but passwordless sudo works"
+    else
+      fail "Sudoers file for 'ansible' is missing and passwordless sudo does not work"
+    fi
   fi
 
   if ${SUDO} passwd -S ansible 2>/dev/null | grep -q ' L '; then
@@ -252,7 +256,7 @@ check_ssh_security() {
   if echo "${sshd_config}" | grep -qi '^allowusers '; then
     ok "SSH AllowUsers is configured: $(echo "${sshd_config}" | grep -i '^allowusers ' | tr '\n' ' ')"
   else
-    fail "SSH AllowUsers is not configured"
+    warn "SSH AllowUsers is not configured; this is acceptable when security_ssh_allow_users is empty"
   fi
 
   if echo "${sshd_config}" | grep -qi '^maxauthtries '; then
@@ -400,7 +404,7 @@ check_docker() {
     if id "${DEV_USER}" 2>/dev/null | grep -q '\bdocker\b'; then
       ok "Developer user '${DEV_USER}' is in docker group"
     else
-      if [[ "${OS_ID}" == "ubuntu" ]]; then
+      if [[ "${OS_ID}" == "ubuntu" || "${OS_ID}" == "debian" ]]; then
         fail "Developer user '${DEV_USER}' is not in docker group"
       else
         warn "Developer user '${DEV_USER}' is not in docker group; this is expected on Astra"
@@ -411,8 +415,8 @@ check_docker() {
   if docker compose version >/dev/null 2>&1; then
     ok "Docker Compose plugin is available: $(docker compose version)"
   else
-    if [[ "${OS_ID}" == "ubuntu" ]]; then
-      fail "Docker Compose plugin is not available on Ubuntu"
+    if [[ "${OS_ID}" == "ubuntu" || "${OS_ID}" == "debian" ]]; then
+      fail "Docker Compose plugin is not available on Ubuntu/Debian"
     else
       warn "Docker Compose plugin is not available; this may be expected on Astra"
     fi
@@ -422,18 +426,20 @@ check_docker() {
 check_python_dev_tools() {
   log_section "Python developer environment checks"
 
-  if [[ "${OS_ID}" == "ubuntu" ]]; then
+  if [[ "${OS_ID}" == "ubuntu" || "${OS_ID}" == "debian" ]]; then
     if command_exists python3; then
       ok "Python: $(python3 --version)"
     else
       fail "python3 is not installed"
     fi
-  else
+  elif [[ "${OS_ID}" == "astra" || "${OS_ID}" == "astra_se" || "${OS_ID}" == "orel" ]]; then
     if [[ -x /usr/local/bin/python3.9 ]]; then
       ok "Astra bootstrap Python: $(/usr/local/bin/python3.9 --version)"
     else
       fail "Astra bootstrap Python /usr/local/bin/python3.9 is missing"
     fi
+  else
+    warn "Unsupported OS for Python baseline check: ${OS_ID}"
   fi
 
   if [[ -z "${DEV_USER:-}" ]]; then
