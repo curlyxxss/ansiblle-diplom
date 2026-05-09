@@ -457,7 +457,6 @@ unreachable=0
 │   ├── host_vars
 │   │   ├── astra.yml
 │   │   ├── astra.yml.example
-│   │   ├── ubuntu-02.yml
 │   │   ├── ubuntu.yml
 │   │   └── ubuntu.yml.example
 │   ├── inventory.ini
@@ -472,8 +471,6 @@ unreachable=0
 ├── roles
 │   ├── base
 │   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── handlers
 │   │   │   └── main.yml
 │   │   ├── README.md
 │   │   └── tasks
@@ -493,8 +490,6 @@ unreachable=0
 │   │       └── pipx.yml
 │   ├── docker
 │   │   ├── defaults
-│   │   │   └── main.yml
-│   │   ├── handlers
 │   │   │   └── main.yml
 │   │   ├── README.md
 │   │   └── tasks
@@ -516,14 +511,13 @@ unreachable=0
 │   └── users
 │       ├── defaults
 │       │   └── main.yml
-│       ├── handlers
-│       │   └── main.yml
 │       ├── README.md
 │       └── tasks
 │           └── main.yml
 └── scripts
     ├── bootstrap-ansible-user.sh
-    └── install-python.sh
+    ├── install-python.sh
+    └── verify-workstation.sh
 ```
 
 Важно:
@@ -580,7 +574,7 @@ ubuntu_hosts
 astra-02 ansible_host=192.0.2.10 ansible_port=2222 ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
 
 [ubuntu_hosts]
-ubuntu-02 ansible_host=192.0.2.10 ansible_port=2224 ansible_user=ansible
+ubuntu-02 ansible_host=192.0.2.10 ansible_port=2223 ansible_user=ansible
 
 [workstations:children]
 astra_hosts
@@ -592,13 +586,13 @@ ubuntu_hosts
 Неправильно:
 
 ```ini
-ubuntu-02 ansible_host=<192.168.0.110>
+ubuntu-02 ansible_host=<192.0.2.10>
 ```
 
 Правильно:
 
 ```ini
-ubuntu-02 ansible_host=192.168.0.110
+ubuntu-02 ansible_host=192.0.2.10
 ```
 
 ---
@@ -945,7 +939,6 @@ Visual Studio Code относится к прикладному пользова
 
 Возможные направления развития:
 
-- опциональная роль `vscode` для desktop-профиля рабочей станции;
 - интеграция с Ansible Vault;
 - безопасное хранение и ротация ключей;
 - поддержка Debian и Linux Mint;
