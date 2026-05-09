@@ -269,13 +269,13 @@ cp ~/.ssh/developer.pub files/ssh_keys/developer.pub
 
 ```ini
 [ubuntu_hosts]
-ubuntu ansible_host=192.168.0.101 ansible_user=ansible
+ubuntu ansible_host=<host_ip> ansible_user=ansible
 
 [debian_hosts]
-debian ansible_host=192.168.0.110 ansible_user=ansible
+debian ansible_host=<host_ip> ansible_user=ansible
 
 [astra_hosts]
-astra ansible_host=192.168.0.120 ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
+astra ansible_host=<host_ip> ansible_user=ansible ansible_python_interpreter=/usr/local/bin/python3.9
 
 [workstations:children]
 ubuntu_hosts
@@ -286,7 +286,7 @@ astra_hosts
 Если используется нестандартный SSH-порт:
 
 ```ini
-debian ansible_host=192.168.0.110 ansible_port=2222 ansible_user=ansible
+debian ansible_host=<host_ip> ansible_port=2222 ansible_user=ansible
 ```
 
 ---
