@@ -22,6 +22,20 @@ require_root() {
   fi
 }
 
+require_sudo_tools() {
+  if ! command -v sudo >/dev/null 2>&1; then
+    fail "sudo is not installed. Install it first: apt update && apt install -y sudo"
+  fi
+
+  if ! command -v visudo >/dev/null 2>&1; then
+    fail "visudo is not available. Install sudo package first."
+  fi
+
+  if [[ ! -d /etc/sudoers.d ]]; then
+    fail "/etc/sudoers.d does not exist. Check sudo installation."
+  fi
+}
+
 detect_sudo_group() {
   if getent group sudo >/dev/null 2>&1; then
     echo "sudo"
@@ -124,6 +138,7 @@ lock_password() {
 
 main() {
   require_root
+  require_sudo_tools
   validate_public_key_input
   create_user
   configure_ssh_key
