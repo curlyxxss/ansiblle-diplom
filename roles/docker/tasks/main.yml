@@ -17,4 +17,4 @@
 #     msg: "Docker role currently supports only Ubuntu. Skipping {{ ansible_facts['distribution'] }}."
 #   when:
 #     - docker_enabled | bool
-#     - ansible_facts['distribution'] != "Ubuntu"
+#     - ansible_facts['distribution_release'] == "orel"

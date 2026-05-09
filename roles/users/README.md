@@ -87,7 +87,7 @@ users_default_groups: []
 Список управляемых пользователей. По умолчанию пустой и должен задаваться в inventory.
 
 Пример:
-
+```yaml
 users:
   - name: ansible
     state: present
@@ -107,7 +107,7 @@ users:
       - "files/ssh_keys/developer.pub"
     sudo: false
     sudo_nopasswd: false
-
+```
 ---
 
 ## Рекомендуемое размещение пользовательских данных
@@ -117,14 +117,14 @@ inventories/group_vars/workstations.yml
 ---
 
 ## Пример использования
-
+```yaml
 - name: Manage workstation users
   hosts: workstations
   become: true
 
   roles:
     - users
-
+```
 ---
 
 ## Особенности реализации
