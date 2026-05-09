@@ -6,6 +6,9 @@ users_manage_accounts: true
 users_default_shell: /bin/bash
 users_default_groups: []
 
+# Default home directory base path
+users_home_base: /home
+
 # Users list is expected to be defined in inventory/group_vars/host_vars
 users: []
 
@@ -16,3 +19,7 @@ users_remove_unmanaged: false
 
 # Default behavior for absent users
 users_absent_remove_home: false
+
+# Sudoers validation command.
+# On Ubuntu, Debian and Astra Linux this path is normally provided by the sudo package.
+users_sudoers_validate_path: /usr/sbin/visudo

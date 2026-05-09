@@ -1,10 +1,22 @@
 ---
+- name: Ensure sudoers.d directory exists when sudo access is configured
+  ansible.builtin.file:
+    path: /etc/sudoers.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  when:
+    - users_manage_accounts | bool
+    - users | selectattr('sudo', 'defined') | selectattr('sudo') | list | length > 0
+
 - name: Ensure managed users are present
   ansible.builtin.user:
     name: "{{ item.name }}"
     state: present
     shell: "{{ item.shell | default(users_default_shell) }}"
     comment: "{{ item.comment | default(omit) }}"
+    home: "{{ item.home | default(users_home_base ~ '/' ~ item.name) }}"
     groups: "{{ (item.groups | default(users_default_groups)) | join(',') }}"
     append: true
     create_home: true
@@ -16,7 +28,7 @@
 
 - name: Ensure .ssh directory exists for managed users
   ansible.builtin.file:
-    path: "/home/{{ item.0.name }}/.ssh"
+    path: "{{ item.0.home | default(users_home_base ~ '/' ~ item.0.name) }}/.ssh"
     state: directory
     owner: "{{ item.0.name }}"
     group: "{{ item.0.name }}"
@@ -48,7 +60,7 @@
       {% else %}
       {{ item.name }} ALL=(ALL) ALL
       {% endif %}
-    validate: /usr/sbin/visudo -cf %s
+    validate: "{{ users_sudoers_validate_path }} -cf %s"
   loop: "{{ users }}"
   when:
     - users_manage_accounts | bool
