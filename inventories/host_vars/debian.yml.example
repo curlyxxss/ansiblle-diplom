@@ -2,3 +2,6 @@
 # Hostname follows the naming convention:
 # <purpose>-<os>-<number>
 base_hostname: dev-debian-01
+
+security_fail2ban_backend: systemd
+security_fail2ban_sshd_logpath: ""

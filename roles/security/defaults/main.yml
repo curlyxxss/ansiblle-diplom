@@ -59,8 +59,10 @@ security_sshd_security_dropin_path: /etc/ssh/sshd_config.d/00-ansible-security.c
 security_fail2ban_enabled: true
 security_fail2ban_package: fail2ban
 security_fail2ban_service: fail2ban
+security_fail2ban_jail_name: sshd
 security_fail2ban_maxretry: 5
 security_fail2ban_bantime: 600
+security_fail2ban_findtime: 600
 security_fail2ban_backend: auto
 security_fail2ban_sshd_logpath: /var/log/auth.log
 

@@ -1,60 +1,57 @@
 ---
-- name: Install fail2ban on Ubuntu/Debian
+- name: Install fail2ban on Ubuntu and Debian
   ansible.builtin.apt:
-    name: "{{ security_fail2ban_package }}"
+    name:
+      - "{{ security_fail2ban_package }}"
+      - python3-systemd
     state: present
     update_cache: true
-    lock_timeout: 300
   when:
     - security_fail2ban_enabled | bool
     - ansible_facts['distribution'] in ["Ubuntu", "Debian"]
 
-- name: Install fail2ban on Astra
-  ansible.builtin.raw: >
-    DEBIAN_FRONTEND=noninteractive apt-get install -y {{ security_fail2ban_package }}
-  register: astra_fail2ban_install
-  changed_when: "'0 upgraded, 0 newly installed' not in astra_fail2ban_install.stdout"
+- name: Install fail2ban on Astra Linux
+  ansible.builtin.raw: |
+    apt-get update
+    apt-get install -y {{ security_fail2ban_package }}
+  changed_when: false
   when:
     - security_fail2ban_enabled | bool
-    - ansible_facts['distribution_release'] == "orel"
+    - ansible_facts['distribution_release'] | default('') == "orel"
 
-- name: Check if fail2ban directory exists
-  ansible.builtin.stat:
-    path: /etc/fail2ban
-  register: fail2ban_dir_stat
+- name: Ensure fail2ban jail.d directory exists
+  ansible.builtin.file:
+    path: /etc/fail2ban/jail.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
   when: security_fail2ban_enabled | bool
 
-- name: Fail if fail2ban directory does not exist after installation
-  ansible.builtin.fail:
-    msg: "fail2ban is not installed correctly: /etc/fail2ban does not exist"
-  when:
-    - security_fail2ban_enabled | bool
-    - not fail2ban_dir_stat.stat.exists
-
-- name: Create fail2ban jail.local
+- name: Configure fail2ban sshd jail
   ansible.builtin.copy:
-    dest: /etc/fail2ban/jail.local
+    dest: "/etc/fail2ban/jail.d/{{ security_fail2ban_jail_name }}.local"
     owner: root
     group: root
     mode: "0644"
     content: |
-      [sshd]
+      [{{ security_fail2ban_jail_name }}]
       enabled = true
       port = ssh
+      filter = sshd
       backend = {{ security_fail2ban_backend }}
-      logpath = {{ security_fail2ban_sshd_logpath }}
       maxretry = {{ security_fail2ban_maxretry }}
+      findtime = {{ security_fail2ban_findtime }}
       bantime = {{ security_fail2ban_bantime }}
-  when:
-    - security_fail2ban_enabled | bool
-    - fail2ban_dir_stat.stat.exists
+      {% if security_fail2ban_sshd_logpath | length > 0 %}
+      logpath = {{ security_fail2ban_sshd_logpath }}
+      {% endif %}
   notify: Restart fail2ban
+  when: security_fail2ban_enabled | bool
 
-- name: Ensure fail2ban is enabled and started
+- name: Ensure fail2ban service is enabled and started
   ansible.builtin.service:
     name: "{{ security_fail2ban_service }}"
     state: started
     enabled: true
-  when:
-    - security_fail2ban_enabled | bool
-    - fail2ban_dir_stat.stat.exists
+  when: security_fail2ban_enabled | bool
