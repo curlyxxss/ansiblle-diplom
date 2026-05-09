@@ -1,15 +1,15 @@
 ---
-- name: Install ufw on Ubuntu
+- name: Install ufw on Ubuntu/Debian
   ansible.builtin.apt:
-    name: ufw
+    name: "{{ security_firewall_package }}"
     state: present
     update_cache: true
     lock_timeout: 300
-  when: ansible_facts['distribution'] == "Ubuntu"
+  when: ansible_facts['distribution'] in ["Ubuntu", "Debian"]
 
 - name: Install ufw on Astra
   ansible.builtin.raw: >
-    DEBIAN_FRONTEND=noninteractive apt-get install -y ufw
+    DEBIAN_FRONTEND=noninteractive apt-get install -y {{ security_firewall_package }}
   register: astra_ufw_install
   changed_when: "'0 upgraded, 0 newly installed' not in astra_ufw_install.stdout"
   when: ansible_facts['distribution_release'] == "orel"

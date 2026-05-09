@@ -1,3 +1,4 @@
+---
 # SSH configuration
 
 security_ssh_port: 22
@@ -6,30 +7,19 @@ security_ssh_permit_root_login: "no"
 security_ssh_password_authentication: "no"
 security_ssh_pubkey_authentication: "yes"
 
-# Ограничения пользователей
-security_ssh_allow_users:
-  - devuser
+# Users allowed to connect over SSH.
+# Empty list means the role will not configure AllowUsers.
+# Define this in group_vars/host_vars when SSH access should be restricted.
+security_ssh_allow_users: []
 
 # Restart ssh after config change
 security_ssh_restart: true
 
-#SSH hardening v2
+# SSH hardening
 security_ssh_max_auth_tries: 3
 security_ssh_login_grace_time: 30
 security_ssh_client_alive_interval: 300
 security_ssh_client_alive_count_max: 2
-
-# Fail2ban
-
-security_fail2ban_enabled: true
-security_fail2ban_maxretry: 5
-security_fail2ban_bantime: 600
-
-# Firewall 
-
-security_firewall_enabled: true
-security_firewall_allowed_ports:
-  - 22
 
 # Additional SSH hardening
 security_ssh_permit_empty_passwords: "no"
@@ -42,7 +32,47 @@ security_ssh_allow_tcp_forwarding: "no"
 security_ssh_max_sessions: 2
 security_ssh_max_startups: "10:30:60"
 
+# SSH daemon configuration path
+security_sshd_config_path: /etc/ssh/sshd_config
+
+# Command used by Ansible validate parameter.
+# Must contain %s because Ansible substitutes a temporary file path.
+security_sshd_validate_file_command: "/usr/sbin/sshd -t -f %s"
+
+# Command used for direct final sshd configuration validation.
+# Do not use %s here.
+security_sshd_validate_live_argv:
+  - /usr/sbin/sshd
+  - -t
+  - -f
+  - "{{ security_sshd_config_path }}"
+
+# SSH drop-in hardening file.
+# Ubuntu/Debian may use /etc/ssh/sshd_config.d/*.conf,
+# which can override security-related values from the main config.
+security_sshd_manage_dropin: true
+security_sshd_config_dropin_dir: /etc/ssh/sshd_config.d
+security_sshd_security_dropin_path: /etc/ssh/sshd_config.d/00-ansible-security.conf
+
+# Fail2ban
+
+security_fail2ban_enabled: true
+security_fail2ban_package: fail2ban
+security_fail2ban_service: fail2ban
+security_fail2ban_maxretry: 5
+security_fail2ban_bantime: 600
+security_fail2ban_backend: auto
+security_fail2ban_sshd_logpath: /var/log/auth.log
+
+# Firewall
+
+security_firewall_enabled: true
+security_firewall_package: ufw
+security_firewall_allowed_ports:
+  - 22
+
 # Basic network sysctl hardening
+
 security_sysctl_enabled: true
 
 security_sysctl_settings:
@@ -54,13 +84,3 @@ security_sysctl_settings:
   net.ipv4.conf.default.accept_source_route: "0"
   net.ipv4.icmp_echo_ignore_broadcasts: "1"
   net.ipv4.tcp_syncookies: "1"
-  
-# SSH daemon configuration path
-security_sshd_config_path: /etc/ssh/sshd_config
-
-# SSH drop-in hardening file.
-# Ubuntu may use /etc/ssh/sshd_config.d/50-cloud-init.conf,
-# which can override security-related values from the main config.
-security_sshd_manage_dropin: true
-security_sshd_config_dropin_dir: /etc/ssh/sshd_config.d
-security_sshd_security_dropin_path: /etc/ssh/sshd_config.d/00-ansible-security.conf

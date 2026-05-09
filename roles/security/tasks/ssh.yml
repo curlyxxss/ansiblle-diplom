@@ -14,113 +14,150 @@
 - name: Disable root login
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?PermitRootLogin'
+    regexp: '^\s*#?\s*PermitRootLogin\s+'
     line: "PermitRootLogin {{ security_ssh_permit_root_login }}"
-    create: true
+    create: false
     backup: true
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Disable password authentication
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?PasswordAuthentication'
+    regexp: '^\s*#?\s*PasswordAuthentication\s+'
     line: "PasswordAuthentication {{ security_ssh_password_authentication }}"
-    create: true
+    create: false
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Ensure public key authentication is enabled
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?PubkeyAuthentication'
+    regexp: '^\s*#?\s*PubkeyAuthentication\s+'
     line: "PubkeyAuthentication {{ security_ssh_pubkey_authentication }}"
-    create: true
+    create: false
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Restrict SSH access to allowed users
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?AllowUsers'
+    regexp: '^\s*#?\s*AllowUsers\s+'
     line: "AllowUsers {{ security_ssh_allow_users | join(' ') }}"
-    create: true
+    create: false
+    validate: "{{ security_sshd_validate_file_command }}"
+  when: security_ssh_allow_users | length > 0
+  notify: Restart SSH service
+
+- name: Remove AllowUsers directive when no users are configured
+  ansible.builtin.lineinfile:
+    path: "{{ security_sshd_config_path }}"
+    regexp: '^\s*#?\s*AllowUsers\s+'
+    state: absent
+    validate: "{{ security_sshd_validate_file_command }}"
+  when: security_ssh_allow_users | length == 0
   notify: Restart SSH service
 
 - name: Set MaxAuthTries
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?MaxAuthTries'
+    regexp: '^\s*#?\s*MaxAuthTries\s+'
     line: "MaxAuthTries {{ security_ssh_max_auth_tries }}"
-    create: true
+    create: false
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Set LoginGraceTime
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?LoginGraceTime'
+    regexp: '^\s*#?\s*LoginGraceTime\s+'
     line: "LoginGraceTime {{ security_ssh_login_grace_time }}"
-    create: true
+    create: false
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Set ClientAliveInterval
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?ClientAliveInterval'
+    regexp: '^\s*#?\s*ClientAliveInterval\s+'
     line: "ClientAliveInterval {{ security_ssh_client_alive_interval }}"
-    create: true
+    create: false
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Set ClientAliveCountMax
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?ClientAliveCountMax'
+    regexp: '^\s*#?\s*ClientAliveCountMax\s+'
     line: "ClientAliveCountMax {{ security_ssh_client_alive_count_max }}"
-    create: true
+    create: false
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Set PermitEmptyPasswords
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?\s*PermitEmptyPasswords\s+'
+    regexp: '^\s*#?\s*PermitEmptyPasswords\s+'
     line: "PermitEmptyPasswords {{ security_ssh_permit_empty_passwords }}"
+    create: false
     backup: true
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
+
+- name: Count X11Forwarding directives
+  ansible.builtin.shell: "grep -E '^\\s*#?\\s*X11Forwarding\\s+' {{ security_sshd_config_path }} | wc -l"
+  register: security_x11_directives_count
+  changed_when: false
+  failed_when: false
 
 - name: Remove duplicate X11Forwarding directives
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
     regexp: '^\s*#?\s*X11Forwarding\s+.*$'
     state: absent
+    validate: "{{ security_sshd_validate_file_command }}"
+  when: security_x11_directives_count.stdout | int > 1
   notify: Restart SSH service
 
 - name: Set X11Forwarding
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
+    regexp: '^\s*#?\s*X11Forwarding\s+'
     line: "X11Forwarding {{ security_ssh_x11_forwarding }}"
     insertafter: EOF
+    create: false
     backup: true
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Set AllowTcpForwarding
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?\s*AllowTcpForwarding\s+'
+    regexp: '^\s*#?\s*AllowTcpForwarding\s+'
     line: "AllowTcpForwarding {{ security_ssh_allow_tcp_forwarding }}"
+    create: false
     backup: true
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Set MaxSessions
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?\s*MaxSessions\s+'
+    regexp: '^\s*#?\s*MaxSessions\s+'
     line: "MaxSessions {{ security_ssh_max_sessions }}"
+    create: false
     backup: true
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Set MaxStartups
   ansible.builtin.lineinfile:
     path: "{{ security_sshd_config_path }}"
-    regexp: '^#?\s*MaxStartups\s+'
+    regexp: '^\s*#?\s*MaxStartups\s+'
     line: "MaxStartups {{ security_ssh_max_startups }}"
+    create: false
     backup: true
+    validate: "{{ security_sshd_validate_file_command }}"
   notify: Restart SSH service
 
 - name: Check if sshd drop-in directory exists
@@ -147,13 +184,16 @@
       ClientAliveCountMax {{ security_ssh_client_alive_count_max }}
       MaxSessions {{ security_ssh_max_sessions }}
       MaxStartups {{ security_ssh_max_startups }}
+      {% if security_ssh_allow_users | length > 0 %}
       AllowUsers {{ security_ssh_allow_users | join(' ') }}
+      {% endif %}
+    validate: "{{ security_sshd_validate_file_command }}"
   when:
     - security_sshd_manage_dropin | bool
     - security_sshd_dropin_dir_stat.stat.exists
   notify: Restart SSH service
 
 - name: Validate sshd configuration
-  ansible.builtin.command: sshd -t
+  ansible.builtin.command:
+    argv: "{{ security_sshd_validate_live_argv }}"
   changed_when: false
-
